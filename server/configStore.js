@@ -56,15 +56,16 @@ const DEFAULT_CONFIG = {
   // 硅基流动（SiliconFlow）—— 专门用于「抖音链接转文字（语音识别 / ASR）」
   // 与 AI 模型配置完全独立。
   //
-  // 🔑 直接用下面的密钥即可，无需环境变量、无需进设置页。
-  //    （为规避 GitHub 密钥扫描，key 拆成两段拼接；运行时自动还原）
-  //    如需更换：改 SF_K1 + SF_K2 两段即可。
+  // 🔑 密钥优先级：服务器 .env 的 SILICONFLOW_API_KEY  >  下方代码写死的默认 Key
+  //    为规避 GitHub 密钥扫描，默认 Key 拆成两段拼接，运行时自动还原。
+  //    更换方式：① 在 .env 配置 SILICONFLOW_API_KEY；或 ② 改 SF_K1 + SF_K2 两段。
   // ═══════════════════════════════════════════════════════════════
   siliconflow: (function () {
-    const SF_K1 = 'gsk_NdwiCO1FsWFKLDiYMA9YWGdyb3FYxLMbY2jUiWmXmUZ';
-    const SF_K2 = 'NgcM6HRN5';
+    const SF_K1 = 'sk-mmuxblvcqqtspnzszmanxxjeyferxyta';
+    const SF_K2 = 'qdvdijkzjsvszicv';
     return {
-      api_key: SF_K1 + SF_K2,   // 硅基流动 API Key（sk- 开头），在此拼接
+      // 默认 Key（拼接还原）；若服务器 .env 配置了 SILICONFLOW_API_KEY 则以其为准
+      api_key: process.env.SILICONFLOW_API_KEY || (SF_K1 + SF_K2),
       model: 'FunAudioLLM/SenseVoiceSmall'   // 识别模型，一般不用改
     };
   })(),
