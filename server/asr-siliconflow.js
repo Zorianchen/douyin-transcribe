@@ -155,15 +155,16 @@ function transcribeChunk(audioPath, apiKey) {
 /**
  * 转录音频，返回带时间戳的 segments
  * @param {string} audioPath 本地音频文件路径（mp3）
+ * @param {string} [apiKey] 可选，优先使用示例传入的硅基流动 API Key（来自用户设置）；缺省时回退环境变量 SILICONFLOW_API_KEY
  * @returns {Promise<{segments:Array, duration:number}>}
  */
-async function transcribe(audioPath) {
-  const apiKey = process.env.SILICONFLOW_API_KEY;
-  if (!apiKey) {
+async function transcribe(audioPath, apiKey) {
+  const key = apiKey || process.env.SILICONFLOW_API_KEY;
+  if (!key) {
     throw new AppError(
       CODES.NO_API_KEY,
       '未配置硅基流动 API Key',
-      '请在 .env 中配置 SILICONFLOW_API_KEY（在 siliconflow.cn 免费注册获取）。'
+      '请在「设置 → AI 模型（硅基流动）」中填写硅基流动 API Key 并保存。'
     );
   }
 
