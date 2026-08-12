@@ -41,6 +41,8 @@ cleanStale(TEMP_DIR);
 const systemOwner = users.ensureSystemOwner();
 // 迁移旧全局 config.json → 系统拥有者配置 + 默认模板（仅一次）
 configStore.migrate(systemOwner ? systemOwner.id : null);
+// 迁移旧版硅基流动 Key（存于 ai.api_key）→ 独立 siliconflow 模块（仅对旧结构生效）
+configStore.migrateSiliconFlow();
 
 // 中间件
 app.use(express.json({ limit: '1mb' }));
@@ -59,8 +61,8 @@ app.get('/api/health', (req, res) => {
   const cfg = configStore.get(systemOwner ? systemOwner.id : 'system');
   const ai = (cfg && cfg.ai) || {};
   const hasAiConfig = !!(ai.enabled && ai.base_url && ai.api_key && ai.model);
-  // ASR 密钥：环境变量或用户配置中的硅基流动 Key 任一即可
-  const hasAsrKeyNow = hasAsrKey() || !!(ai && ai.api_key);
+  // ASR 密钥：环境变量优先，否则用代码内置（硬编码）的硅基流动 Key；与设置页输入无关
+  const hasAsrKeyNow = hasAsrKey() || !!configStore.defaultConfig().siliconflow.api_key;
   res.json({
     ok: true,
     asr_provider: asr.provider,
@@ -246,6 +248,10 @@ function maskConfig(cfg) {
       configured: !!(cfg.feishu.app_id && cfg.feishu.app_secret && cfg.feishu.app_token && cfg.feishu.table_id)
     },
     field_map: cfg.field_map,
+    siliconflow: {
+      model: cfg.siliconflow.model,
+      has_key: !!cfg.siliconflow.api_key
+    },
     ai: {
       enabled: cfg.ai.enabled,
       base_url: cfg.ai.base_url,
@@ -267,6 +273,7 @@ app.get('/api/admin/config-template', auth.requireSystemOwner, (req, res) => {
 app.put('/api/admin/config-template', auth.requireSystemOwner, (req, res) => {
   const patch = {};
   if (req.body.feishu) patch.feishu = req.body.feishu;
+  if (req.body.siliconflow) patch.siliconflow = req.body.siliconflow;
   if (req.body.ai) patch.ai = req.body.ai;
   if (req.body.field_map) patch.field_map = req.body.field_map;
   configStore.setTemplate(patch);
@@ -290,12 +297,12 @@ app.post('/api/admin/users/:id/config/reset', auth.requireSystemOwner, (req, res
 
 // 核心接口：提取文字稿
 app.post('/api/transcribe', auth.requireAuth, async (req, res) => {
-  // 硅基流动 Key：优先用当前用户设置里填的（与 AI 加工共用），否则回退环境变量
-  const siliconflowKey = configStore.get(req.userId).ai.api_key || process.env.SILICONFLOW_API_KEY;
+  // 硅基流动 Key：环境变量优先，否则用代码内置（硬编码）的 Key；无需在设置页填写
+  const siliconflowKey = process.env.SILICONFLOW_API_KEY || configStore.defaultConfig().siliconflow.api_key;
   if (!siliconflowKey) {
     let hint;
     if (asr.provider === 'tencent') hint = '请在 .env 中配置 TENCENT_APP_ID、TENCENT_SECRET_ID、TENCENT_SECRET_KEY。';
-    else hint = '请在「设置 → AI 模型（硅基流动）」中填写硅基流动 API Key 并保存。';
+    else hint = '未配置语音识别密钥：请在服务器 .env 中添加 SILICONFLOW_API_KEY，或检查代码内置的硅基流动 Key。';
     return res.status(500).json({
       error: {
         code: CODES.NO_API_KEY,
@@ -438,7 +445,7 @@ app.post('/api/batch', auth.requireAuth, (req, res) => {
     for (const item of job.items) {
       item.status = 'running';
       try {
-        const result = await transcribeDouyin(item.url);
+        const result = await transcribeDouyin(item.url, process.env.SILICONFLOW_API_KEY || configStore.defaultConfig().siliconflow.api_key);
         item.result = result;
         item.status = 'done';
         try { history.add(result, req.userId); autogen.trigger(result.video_id, configStore.get(req.userId).ai); } catch {}
@@ -483,7 +490,7 @@ app.get('/api/batch/:id', auth.requireAuth, (req, res) => {
   });
 });
 
-// ============ 配置：飞书 + AI 模型（按用户隔离） ============
+// ============ 配置：飞书 + 语音识别（硅基流动）+ AI 模型（按用户隔离） ============
 // 获取当前用户的配置（脱敏，不返回 app_secret/api_key 明文）
 app.get('/api/config', auth.requireAuth, (req, res) => {
   const cfg = configStore.get(req.userId);
@@ -499,6 +506,10 @@ app.get('/api/config', auth.requireAuth, (req, res) => {
       configured: !!(cfg.feishu.app_id && cfg.feishu.app_secret && cfg.feishu.app_token && cfg.feishu.table_id)
     },
     field_map: cfg.field_map,
+    siliconflow: {
+      model: cfg.siliconflow.model,
+      has_key: !!cfg.siliconflow.api_key
+    },
     ai: {
       enabled: cfg.ai.enabled,
       base_url: cfg.ai.base_url,
@@ -515,10 +526,16 @@ app.get('/api/config', auth.requireAuth, (req, res) => {
 app.post('/api/config', auth.requireAuth, (req, res) => {
   const patch = {};
   if (req.body.feishu) patch.feishu = req.body.feishu;
+  if (req.body.siliconflow) patch.siliconflow = req.body.siliconflow;
   if (req.body.ai) patch.ai = req.body.ai;
   if (req.body.field_map) patch.field_map = req.body.field_map;
   const cfg = configStore.set(req.userId, patch);
-  res.json({ ok: true, field_map: cfg.field_map, ai: { enabled: cfg.ai.enabled, model: cfg.ai.model } });
+  res.json({
+    ok: true,
+    field_map: cfg.field_map,
+    siliconflow: { model: cfg.siliconflow.model },
+    ai: { enabled: cfg.ai.enabled, model: cfg.ai.model }
+  });
 });
 
 // 测试自定义 AI 配置
@@ -699,7 +716,7 @@ app.get('*', (req, res) => {
 });
 
 const server = app.listen(PORT, () => {
-  const labelMap = { groq: 'Groq', tencent: '腾讯云 ASR', siliconflow: '硅基流动' };
+  const labelMap = { tencent: '腾讯云 ASR', siliconflow: '硅基流动' };
   const keyLabel = labelMap[asr.provider] || asr.provider;
   const keyStatus = hasAsrKey() ? '已配置 ✓' : '未配置 ✗';
   console.log(`\n  抖音文字稿服务已启动`);
