@@ -380,7 +380,7 @@ app.post('/api/process', auth.requireAuth, async (req, res) => {
     return res.status(400).json({ error: { message: '缺少要加工的文字稿' } });
   }
   try {
-    const out = await processText(action, data);
+    const out = await processText(action, data, configStore.get(req.userId).ai);
     // 持久化到历史记录的 analysis 字段
     if (persist !== false && video_id) {
       try { history.updateAnalysis(video_id, { [action]: out.result }, req.userId); } catch (e) {}
