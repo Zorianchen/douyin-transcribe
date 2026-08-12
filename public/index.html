@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#fe2c55" />
   <title>抖音文字稿工作台</title>
-  <link rel="stylesheet" href="style.css?v=20260812s" />
+  <link rel="stylesheet" href="style.css?v=20260812t" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>" />
 </head>
 <body>
@@ -206,7 +206,7 @@
     </div>
     <div class="modal-tabs">
       <button class="modal-tab active" data-tab="feishu" type="button">飞书多维表格</button>
-      <button class="modal-tab" data-tab="ai" type="button">AI 模型</button>
+      <button class="modal-tab" data-tab="ai" type="button">AI 模型（硅基流动）</button>
       <button class="modal-tab" data-tab="profile" type="button">个人资料</button>
       <button class="modal-tab" data-tab="fields" type="button">字段映射</button>
     </div>
@@ -230,20 +230,21 @@
         <div id="feishuFields" class="field-list hidden"></div>
         <button class="btn btn-primary btn-sm" id="feishuSyncBtn" type="button">🧩 同步字段（自动创建缺失列）</button>
       </div>
-      <!-- AI 配置 -->
+      <!-- AI 配置（硅基流动） -->
       <div class="tab-pane" data-pane="ai">
         <label class="form-check">
-          <input type="checkbox" id="aiEnabled" /> <span>使用自定义 AI 模型（不勾则用内置 Groq）</span>
+          <input type="checkbox" id="aiEnabled" checked /> <span>启用 AI 智能加工（使用硅基流动）</span>
         </label>
         <label class="form-label">API 地址（OpenAI 兼容）</label>
-        <input type="text" id="aiBaseUrl" class="form-input" placeholder="https://api.openai.com/v1" />
-        <label class="form-label">API Key</label>
+        <input type="text" id="aiBaseUrl" class="form-input" placeholder="https://api.siliconflow.cn/v1" />
+        <label class="form-label">硅基流动 API Key</label>
         <div class="form-input-row">
           <input type="password" id="aiApiKey" class="form-input" placeholder="sk-...（留空不修改）" autocomplete="new-password" />
           <button type="button" id="clearAiKey" class="btn-clear-key hidden" title="清除密钥">✕</button>
         </div>
+        <div class="form-hint">该 API Key 同时用于「语音识别（ASR）」与「AI 智能加工」，在 <a href="https://siliconflow.cn" target="_blank" rel="noreferrer">siliconflow.cn</a> 免费获取。</div>
         <label class="form-label">模型名称</label>
-        <input type="text" id="aiModel" class="form-input" placeholder="gpt-4o-mini / deepseek-chat / qwen-plus" />
+        <input type="text" id="aiModel" class="form-input" placeholder="Qwen/Qwen2.5-72B-Instruct / deepseek-ai/DeepSeek-V3" />
         <label class="form-label">温度（0-1）</label>
         <input type="number" id="aiTemp" class="form-input" value="0.6" step="0.1" min="0" max="1" />
         <label class="form-check">
@@ -333,14 +334,14 @@
       <label class="form-label">多维表格链接</label>
       <input type="text" id="tplFeishuUrl" class="form-input" placeholder="https://xxx.feishu.cn/wiki/...?table=tbl...&view=vew..." />
       <label class="form-check">
-        <input type="checkbox" id="tplAiEnabled" /> <span>启用自定义 AI 模型（不勾则用内置 Groq）</span>
+        <input type="checkbox" id="tplAiEnabled" checked /> <span>启用 AI 智能加工（使用硅基流动）</span>
       </label>
       <label class="form-label">AI API 地址（OpenAI 兼容）</label>
-      <input type="text" id="tplAiBaseUrl" class="form-input" placeholder="https://api.openai.com/v1" />
-      <label class="form-label">AI API Key</label>
+      <input type="text" id="tplAiBaseUrl" class="form-input" placeholder="https://api.siliconflow.cn/v1" />
+      <label class="form-label">硅基流动 API Key</label>
       <input type="password" id="tplAiApiKey" class="form-input" placeholder="sk-...（留空则不修改）" autocomplete="new-password" />
       <label class="form-label">模型名称</label>
-      <input type="text" id="tplAiModel" class="form-input" placeholder="gpt-4o-mini / deepseek-chat / qwen-plus" />
+      <input type="text" id="tplAiModel" class="form-input" placeholder="Qwen/Qwen2.5-72B-Instruct / deepseek-ai/DeepSeek-V3" />
       <label class="form-label">温度（0-1）</label>
       <input type="number" id="tplAiTemp" class="form-input" value="0.6" step="0.1" min="0" max="1" />
     </div>
@@ -413,6 +414,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20260812s"></script>
+  <script src="app.js?v=20260812t"></script>
 </body>
 </html>
