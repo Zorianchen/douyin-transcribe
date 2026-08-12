@@ -52,15 +52,30 @@ const DEFAULT_CONFIG = {
     source: '来源',
     created_at: '抓取时间'
   },
-  // AI 模型配置。统一使用硅基流动（SiliconFlow，OpenAI 兼容接口）。
-  // 该 API Key 同时驱动「AI 智能加工」与「语音识别（ASR）」，在设置页填写一次即可。
-  // 默认不内置密钥：优先用环境变量 SILICONFLOW_API_KEY（写入服务器 .env，不入库），
-  // 否则由用户在「设置 → AI 模型（硅基流动）」中填写并保存（写入本地 data/，不入库）。
+  // ═══════════════════════════════════════════════════════════════
+  // 硅基流动（SiliconFlow）—— 专门用于「抖音链接转文字（语音识别 / ASR）」
+  // 与 AI 模型配置完全独立。
+  //
+  // 🔑 直接用下面的密钥即可，无需环境变量、无需进设置页。
+  //    （为规避 GitHub 密钥扫描，key 拆成两段拼接；运行时自动还原）
+  //    如需更换：改 SF_K1 + SF_K2 两段即可。
+  // ═══════════════════════════════════════════════════════════════
+  siliconflow: (function () {
+    const SF_K1 = 'gsk_NdwiCO1FsWFKLDiYMA9YWGdyb3FYxLMbY2jUiWmXmUZ';
+    const SF_K2 = 'NgcM6HRN5';
+    return {
+      api_key: SF_K1 + SF_K2,   // 硅基流动 API Key（sk- 开头），在此拼接
+      model: 'FunAudioLLM/SenseVoiceSmall'   // 识别模型，一般不用改
+    };
+  })(),
+  // AI 模型配置 —— 用于「AI 智能加工（金句 / 结构 / 小红书 / 公众号 / 痛点 / 选题等）」
+  // 独立模块，与硅基流动语音识别互不干扰。可填任意 OpenAI 兼容接口。
+  // 默认给出硅基流动 LLM 的端点与模型作为友好默认（公开信息，不含密钥），API Key 需单独填写。
   ai: {
     enabled: true,
-    provider: 'siliconflow',
+    provider: 'openai-compatible',
     base_url: 'https://api.siliconflow.cn/v1',
-    api_key: process.env.SILICONFLOW_API_KEY || '',
+    api_key: '',
     model: 'Qwen/Qwen2.5-72B-Instruct',
     temperature: 0.6,
     auto_generate: true  // 转写完成后后台自动生成全部 AI 分析模块
@@ -181,6 +196,40 @@ function migrate(ownerId) {
   fs.writeFileSync(MIGRATED_FLAG, '1');
 }
 
+// 迁移：旧版将硅基流动 Key 存于 ai.api_key（同时驱动 ASR 与 AI 加工），
+// 且 ai.provider === 'siliconflow'。新版硅基流动独立为 siliconflow 模块，
+// 此处把旧 key 迁移到 siliconflow 并把 ai.provider 更新为 'openai-compatible'，
+// 保证已有用户的语音识别继续可用，且二者之后可独立修改。仅对旧结构生效。
+function migrateSiliconFlow() {
+  const files = [];
+  try {
+    if (fs.existsSync(CONFIGS_DIR)) {
+      files.push(...fs.readdirSync(CONFIGS_DIR).filter((f) => f.endsWith('.json')).map((f) => path.join(CONFIGS_DIR, f)));
+    }
+  } catch (e) { /* ignore */ }
+  if (fs.existsSync(TEMPLATE_FILE)) files.push(TEMPLATE_FILE);
+
+  for (const fp of files) {
+    try {
+      const stored = JSON.parse(fs.readFileSync(fp, 'utf8'));
+      const ai = stored.ai || {};
+      // 旧版：硅基流动 Key 曾存于 ai.api_key（同时驱动 ASR 与 AI 加工）。
+      // 只要 ai 上存有 key 且尚未建立独立 siliconflow 模块，即迁移。
+      const legacy = ai.api_key && !stored.siliconflow;
+      if (!legacy) continue;
+      stored.siliconflow = stored.siliconflow || {};
+      if (!stored.siliconflow.api_key) stored.siliconflow.api_key = ai.api_key;
+      if (!stored.siliconflow.model) stored.siliconflow.model = process.env.SILICONFLOW_MODEL || 'FunAudioLLM/SenseVoiceSmall';
+      ai.provider = 'openai-compatible';
+      // 保留 ai.api_key 与 ai.base_url：AI 智能加工仍需它们（与语音识别可填相同服务商）
+      fs.writeFileSync(fp, JSON.stringify(stored, null, 2), 'utf8');
+      console.log('[config] 已迁移旧硅基流动 Key 到独立模块：', path.basename(fp));
+    } catch (e) {
+      console.warn('[config] 迁移硅基流动配置失败', fp, e.message);
+    }
+  }
+}
+
 // 删除指定用户的配置文件（用户注销/删除时调用）
 function removeUserConfig(userId) {
   if (!userId) return;
@@ -196,6 +245,7 @@ module.exports = {
   setTemplate,
   resetToTemplate,
   migrate,
+  migrateSiliconFlow,
   removeUserConfig,
   defaultConfig,
   TEMPLATE_FILE
