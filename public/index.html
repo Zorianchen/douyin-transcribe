@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#fe2c55" />
+  <title>抖音文字稿工作台</title>
+  <link rel="stylesheet" href="style.css?v=20260812p" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>" />
+</head>
+<body>
+  <div class="app">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <span class="logo-emoji">📝</span>
+        <span class="logo-text">文字稿工作台</span>
+      </div>
+      <nav class="nav">
+        <button class="nav-item active" data-view="single">
+          <span class="nav-icon">🎯</span><span>单条转写</span>
+        </button>
+        <button class="nav-item" data-view="batch">
+          <span class="nav-icon">📚</span><span>批量转写</span>
+        </button>
+        <button class="nav-item" data-view="library">
+          <span class="nav-icon">🗂</span><span>文案库</span>
+        </button>
+        <button class="nav-item hidden" data-view="admin" id="navAdmin">
+          <span class="nav-icon">🛡</span><span>用户管理</span>
+        </button>
+      </nav>
+      <div class="sidebar-user" id="sidebarUser">
+        <span class="user-avatar" id="userAvatar">U</span>
+        <span class="user-name" id="userName">未登录</span>
+        <button class="user-logout" id="userLogout" type="button" title="退出登录">退出</button>
+      </div>
+      <div class="sidebar-footer">
+        <div class="health" id="healthDot">●</div>
+        <span id="healthText">检查中…</span>
+        <button class="settings-btn" id="settingsBtn" title="飞书 / AI 设置">⚙️</button>
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggle" title="菜单">☰</button>
+    </aside>
+
+    <!-- 主内容 -->
+    <main class="content">
+
+      <!-- ====== 视图1：单条转写 ====== -->
+      <section class="view active" id="view-single">
+        <header class="page-hero">
+          <h1>抖音视频文字稿提取</h1>
+          <p>粘贴链接，自动提取完整字幕 / 语音文字稿，支持一键复制、下载与智能加工</p>
+        </header>
+
+        <div class="card input-card">
+          <label for="urlInput" class="input-label">视频链接 / 分享文案</label>
+          <textarea id="urlInput" class="url-input" rows="3"
+            placeholder="粘贴抖音分享文案，例如：&#10;7.99 复制打开抖音... https://v.douyin.com/xxxxx/ 直接观看视频！"
+            autocomplete="off" spellcheck="false"></textarea>
+          <div class="input-hint" id="inputHint">支持 v.douyin.com 短链、douyin.com/video 链接，以及整段分享文案（Ctrl+Enter 快速提取）</div>
+          <button id="extractBtn" class="btn btn-primary" type="button">
+            <span class="btn-label">提取文字稿</span>
+            <span class="btn-spinner" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <div id="loadingSection" class="loading hidden">
+          <div class="loading-spinner"></div>
+          <div class="loading-text" id="loadingText">正在解析链接…</div>
+          <div class="loading-steps">
+            <span class="step active" data-step="0">解析链接</span><span class="step-arrow">›</span>
+            <span class="step" data-step="1">获取信息</span><span class="step-arrow">›</span>
+            <span class="step" data-step="2">提取字幕</span><span class="step-arrow">›</span>
+            <span class="step" data-step="3">整理分段</span>
+          </div>
+        </div>
+
+        <div id="errorSection" class="error-box hidden">
+          <div class="error-icon">⚠️</div>
+          <div class="error-content">
+            <div class="error-title" id="errorTitle">提取失败</div>
+            <div class="error-message" id="errorMessage"></div>
+          </div>
+        </div>
+
+        <div id="resultSection" class="card result-card hidden"></div>
+      </section>
+
+      <!-- ====== 视图2：批量转写 ====== -->
+      <section class="view" id="view-batch">
+        <header class="page-hero">
+          <h1>批量转写</h1>
+          <p>一次粘贴多个抖音链接（每行一个或整段分享文案），自动排队处理并全部存入文案库</p>
+        </header>
+        <div class="card input-card">
+          <label class="input-label">多个视频链接</label>
+          <textarea id="batchInput" class="url-input" rows="6"
+            placeholder="每行一个链接，或直接粘贴多段分享文案：&#10;https://v.douyin.com/aaaaa/&#10;https://v.douyin.com/bbbbb/"></textarea>
+          <div class="input-hint" id="batchHint">将自动识别其中所有抖音链接，单次最多 30 个</div>
+          <button id="batchBtn" class="btn btn-primary" type="button">
+            <span class="btn-label">开始批量提取</span>
+            <span class="btn-spinner"></span>
+          </button>
+        </div>
+        <div id="batchProgress" class="batch-progress hidden"></div>
+        <div id="batchList" class="batch-list"></div>
+      </section>
+
+      <!-- ====== 视图3：文案库 ====== -->
+      <section class="view" id="view-library">
+        <header class="page-hero">
+          <h1>文案库</h1>
+          <p>所有转写过的视频都保存在这里，支持关键词搜索，点开可查看与智能加工</p>
+        </header>
+        <div class="library-toolbar">
+          <input type="text" id="librarySearch" class="search-input" placeholder="搜索标题、作者或正文关键词…" />
+          <button id="libraryRefresh" class="btn btn-secondary btn-sm" type="button">刷新</button>
+          <button id="libraryUploadAll" class="btn btn-primary btn-sm" type="button">☁️ 上传全部到飞书</button>
+          <button id="libraryClear" class="btn btn-text btn-sm" type="button">清空全部</button>
+        </div>
+        <div id="libraryGrid" class="library-grid"></div>
+        <div id="libraryEmpty" class="library-empty hidden">
+          <div class="empty-emoji">📭</div>
+          <div>还没有文案，去转写一条吧</div>
+        </div>
+      </section>
+
+      <!-- ====== 视图4：用户管理（仅系统拥有者可见） ====== -->
+      <section class="view" id="view-admin">
+        <header class="page-hero">
+          <h1>用户管理</h1>
+          <p>系统拥有者视图 · 管理注册用户与默认配置模板</p>
+          <button class="btn btn-primary btn-sm" id="createUserBtn" type="button">➕ 新增用户</button>
+        </header>
+        <!-- 默认配置模板（仅系统拥有者） -->
+        <div class="admin-template-card" id="adminTemplateCard">
+          <div class="admin-template-head">
+            <div class="admin-template-title">⚙️ 默认配置模板</div>
+            <button class="btn btn-secondary btn-sm" id="editTemplateBtn" type="button">编辑模板</button>
+          </div>
+          <div class="admin-template-desc">新注册用户会自动继承以下飞书 / AI 配置作为初始设置</div>
+          <div class="admin-template-status" id="adminTemplateStatus">加载中…</div>
+        </div>
+        <div class="admin-count" id="adminCount">加载中…</div>
+        <div class="admin-table-wrap">
+          <table class="admin-table" id="adminTable">
+            <thead>
+              <tr>
+                <th>用户名</th>
+                <th>显示名称</th>
+                <th>邮箱</th>
+                <th>注册时间</th>
+                <th>角色</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="adminTableBody">
+              <tr><td colspan="6" class="admin-loading">加载中…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- 智能加工抽屉 -->
+  <div class="drawer-mask hidden" id="drawerMask"></div>
+  <aside class="drawer hidden" id="drawer">
+    <div class="drawer-header">
+      <div class="drawer-title" id="drawerTitle">✨ AI 智能加工</div>
+      <button class="drawer-min" id="drawerMin" type="button" title="最小化（后台继续生成）">—</button>
+      <button class="drawer-close" id="drawerClose" type="button">×</button>
+    </div>
+    <div class="drawer-actions" id="drawerActions">
+      <button class="ai-btn ai-btn-report" id="btnGenAll" type="button"><span>🚀</span> 一键生成全部</button>
+      <button class="ai-btn" id="btnGenReport" type="button"><span>📄</span> 生成分析报告</button>
+      <button class="ai-btn" id="btnGenSelected" type="button" disabled><span>✅</span> 生成选中</button>
+    </div>
+    <div class="drawer-body" id="drawerBody">
+      <div class="drawer-placeholder">选择要生成的模块，或点击"一键生成全部"</div>
+    </div>
+    <div class="drawer-footer hidden" id="drawerFooter">
+      <button class="btn btn-secondary btn-sm" id="aiCopyBtn" type="button">复制结果</button>
+      <button class="btn btn-secondary btn-sm hidden" id="viewReportBtn" type="button">👀 在线查看</button>
+      <button class="btn btn-primary btn-sm hidden" id="exportReportBtn" type="button">📄 导出 HTML</button>
+    </div>
+  </aside>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- 抽屉最小化后的浮动进度胶囊 -->
+  <div class="drawer-mini hidden" id="drawerMini">
+    <span class="mini-spinner" id="miniSpinner"></span>
+    <span class="mini-text" id="miniText">生成中…</span>
+    <button class="mini-close" id="miniClose" type="button" title="关闭">×</button>
+  </div>
+
+  <!-- 设置弹窗：飞书 + AI 配置 -->
+  <div class="modal-mask hidden" id="settingsMask"></div>
+  <div class="modal hidden" id="settingsModal">
+    <div class="modal-header">
+      <div class="modal-title">⚙️ 设置</div>
+      <button class="drawer-close" id="settingsClose" type="button">×</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" data-tab="feishu" type="button">飞书多维表格</button>
+      <button class="modal-tab" data-tab="ai" type="button">AI 模型</button>
+      <button class="modal-tab" data-tab="profile" type="button">个人资料</button>
+      <button class="modal-tab" data-tab="fields" type="button">字段映射</button>
+    </div>
+    <div class="modal-body" id="settingsBody">
+      <!-- 飞书配置 -->
+      <div class="tab-pane active" data-pane="feishu">
+        <label class="form-label">App ID</label>
+        <input type="text" id="feishuAppId" class="form-input" placeholder="cli_xxxxxxxx" autocomplete="off" />
+        <label class="form-label">App Secret</label>
+        <input type="password" id="feishuAppSecret" class="form-input" placeholder="应用密钥" autocomplete="new-password" />
+        <label class="form-label">多维表格链接</label>
+        <input type="text" id="feishuUrl" class="form-input" placeholder="https://xxx.feishu.cn/wiki/...?table=tbl...&view=vew..." />
+        <div class="form-hint">支持 /base/ 和 /wiki/ 链接，自动解析 app_token、table、view</div>
+        <div class="form-row">
+          <button class="btn btn-secondary btn-sm" id="feishuConnectBtn" type="button">🔗 测试连接</button>
+          <span id="feishuStatus" class="form-status"></span>
+        </div>
+        <div id="feishuFields" class="field-list hidden"></div>
+        <button class="btn btn-primary btn-sm" id="feishuSyncBtn" type="button">🧩 同步字段（自动创建缺失列）</button>
+      </div>
+      <!-- AI 配置 -->
+      <div class="tab-pane" data-pane="ai">
+        <label class="form-check">
+          <input type="checkbox" id="aiEnabled" /> <span>使用自定义 AI 模型（不勾则用内置 Groq）</span>
+        </label>
+        <label class="form-label">API 地址（OpenAI 兼容）</label>
+        <input type="text" id="aiBaseUrl" class="form-input" placeholder="https://api.openai.com/v1" />
+        <label class="form-label">API Key</label>
+        <input type="password" id="aiApiKey" class="form-input" placeholder="sk-..." autocomplete="new-password" />
+        <label class="form-label">模型名称</label>
+        <input type="text" id="aiModel" class="form-input" placeholder="gpt-4o-mini / deepseek-chat / qwen-plus" />
+        <label class="form-label">温度（0-1）</label>
+        <input type="number" id="aiTemp" class="form-input" value="0.6" step="0.1" min="0" max="1" />
+        <label class="form-check">
+          <input type="checkbox" id="aiAutoGen" checked /> <span>转写完成后后台自动生成全部 AI 模块（含报告）</span>
+        </label>
+        <div class="form-row">
+          <button class="btn btn-secondary btn-sm" id="aiTestBtn" type="button">🧪 测试连接</button>
+          <span id="aiStatus" class="form-status"></span>
+        </div>
+      </div>
+      <!-- 个人资料配置 -->
+      <div class="tab-pane" data-pane="profile">
+        <div class="profile-section">
+          <div class="profile-section-title">基本信息</div>
+          <label class="form-label">显示名称</label>
+          <input type="text" id="pfDisplayName" class="form-input" placeholder="用于展示的昵称" />
+          <label class="form-label">个人简介</label>
+          <textarea id="pfBio" class="form-input" rows="2" placeholder="一句话介绍自己（选填）"></textarea>
+        </div>
+        <div class="profile-section">
+          <div class="profile-section-title">联系方式</div>
+          <label class="form-label">邮箱</label>
+          <input type="email" id="pfEmail" class="form-input" placeholder="用于接收通知（选填）" />
+          <label class="form-label">微信号</label>
+          <input type="text" id="pfWechat" class="form-input" placeholder="微信号（选填）" />
+        </div>
+        <div class="profile-section">
+          <div class="profile-section-title">偏好设置</div>
+          <label class="form-check">
+            <input type="checkbox" id="pfNotifBrowser" checked /> <span>浏览器内通知（转写完成、AI 生成完毕时提示）</span>
+          </label>
+          <label class="form-check">
+            <input type="checkbox" id="pfAutoAi" checked /> <span>转写完成后自动生成全部 AI 分析模块</span>
+          </label>
+        </div>
+        <div class="profile-section">
+          <div class="profile-section-title">账户信息</div>
+          <div class="profile-info-row">
+            <span class="profile-info-label">角色</span>
+            <span id="pfRole" class="profile-role-badge user">普通用户</span>
+          </div>
+          <div class="profile-info-row">
+            <span class="profile-info-label">注册时间</span>
+            <span id="pfCreatedAt" class="profile-info-value">-</span>
+          </div>
+          <div class="profile-info-row">
+            <span class="profile-info-label">最后更新</span>
+            <span id="pfUpdatedAt" class="profile-info-value">-</span>
+          </div>
+        </div>
+        <div class="profile-section">
+          <div class="profile-section-title">修改密码</div>
+          <label class="form-label">当前密码</label>
+          <input type="password" id="pfOldPwd" class="form-input" placeholder="输入当前密码以验证身份" autocomplete="current-password" />
+          <label class="form-label">新密码</label>
+          <input type="password" id="pfNewPwd" class="form-input" placeholder="至少 6 位" autocomplete="new-password" />
+          <label class="form-label">确认新密码</label>
+          <input type="password" id="pfConfirmPwd" class="form-input" placeholder="再次输入新密码" autocomplete="new-password" />
+          <button id="pfChangePwdBtn" class="btn btn-secondary btn-sm" type="button">🔒 修改密码</button>
+          <span id="pfPwdStatus" class="form-status"></span>
+        </div>
+      </div>
+      <!-- 字段映射 -->
+      <div class="tab-pane" data-pane="fields">
+        <div class="form-hint">左侧是文案库字段，右侧是飞书表格里的列名。修改列名后点保存，上传时按此映射写入。</div>
+        <div id="fieldMapList" class="field-map-list"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" id="settingsCancel" type="button">取消</button>
+      <button class="btn btn-primary btn-sm" id="settingsSave" type="button">保存设置</button>
+    </div>
+  </div>
+  <!-- 默认配置模板编辑弹窗（仅系统拥有者） -->
+  <div class="modal-mask hidden" id="templateMask"></div>
+  <div class="modal hidden" id="templateModal">
+    <div class="modal-header">
+      <div class="modal-title">⚙️ 默认配置模板</div>
+      <button class="drawer-close" id="templateClose" type="button">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-hint">此模板将作为新用户的初始配置。已注册用户不受影响，可在下方用户列表中单独「重置为默认」。</div>
+      <label class="form-label">飞书 App ID</label>
+      <input type="text" id="tplFeishuAppId" class="form-input" placeholder="cli_xxxxxxxx" autocomplete="off" />
+      <label class="form-label">飞书 App Secret</label>
+      <input type="password" id="tplFeishuAppSecret" class="form-input" placeholder="应用密钥（留空则不修改）" autocomplete="new-password" />
+      <label class="form-label">多维表格链接</label>
+      <input type="text" id="tplFeishuUrl" class="form-input" placeholder="https://xxx.feishu.cn/wiki/...?table=tbl...&view=vew..." />
+      <label class="form-check">
+        <input type="checkbox" id="tplAiEnabled" /> <span>启用自定义 AI 模型（不勾则用内置 Groq）</span>
+      </label>
+      <label class="form-label">AI API 地址（OpenAI 兼容）</label>
+      <input type="text" id="tplAiBaseUrl" class="form-input" placeholder="https://api.openai.com/v1" />
+      <label class="form-label">AI API Key</label>
+      <input type="password" id="tplAiApiKey" class="form-input" placeholder="sk-...（留空则不修改）" autocomplete="new-password" />
+      <label class="form-label">模型名称</label>
+      <input type="text" id="tplAiModel" class="form-input" placeholder="gpt-4o-mini / deepseek-chat / qwen-plus" />
+      <label class="form-label">温度（0-1）</label>
+      <input type="number" id="tplAiTemp" class="form-input" value="0.6" step="0.1" min="0" max="1" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" id="templateCancel" type="button">取消</button>
+      <button class="btn btn-primary btn-sm" id="templateSave" type="button">保存模板</button>
+    </div>
+  </div>
+
+  <!-- 用户配置查看弹窗（仅系统拥有者，只读 + 重置） -->
+  <div class="modal-mask hidden" id="userConfigMask"></div>
+  <div class="modal hidden" id="userConfigModal">
+    <div class="modal-header">
+      <div class="modal-title" id="userConfigTitle">用户配置</div>
+      <button class="drawer-close" id="userConfigClose" type="button">×</button>
+    </div>
+    <div class="modal-body" id="userConfigBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" id="userConfigCancel" type="button">关闭</button>
+      <button class="btn btn-primary btn-sm" id="userConfigReset" type="button">重置为默认模板</button>
+    </div>
+  </div>
+
+  <!-- 新增用户弹窗（仅系统拥有者） -->
+  <div class="modal-mask hidden" id="createUserMask"></div>
+  <div class="modal hidden" id="createUserModal">
+    <div class="modal-header">
+      <div class="modal-title">➕ 新增用户</div>
+      <button class="drawer-close" id="createUserClose" type="button">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-hint">创建新账户，新用户可使用用户名和密码登录系统。初始配置将继承默认模板。</div>
+      <label class="form-label">用户名 <span class="required">*</span></label>
+      <input type="text" id="cuUsername" class="form-input" placeholder="3-20 位，中英文 / 数字" autocomplete="off" />
+      <label class="form-label">密码 <span class="required">*</span></label>
+      <input type="password" id="cuPassword" class="form-input" placeholder="至少 6 位" autocomplete="new-password" />
+      <label class="form-label">确认密码 <span class="required">*</span></label>
+      <input type="password" id="cuConfirmPwd" class="form-input" placeholder="再次输入密码" autocomplete="new-password" />
+      <label class="form-label">邮箱（选填）</label>
+      <input type="email" id="cuEmail" class="form-input" placeholder="用于联系（选填）" autocomplete="off" />
+      <span id="cuStatus" class="form-status"></span>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" id="createUserCancel" type="button">取消</button>
+      <button class="btn btn-primary btn-sm" id="createUserSubmit" type="button">创建用户</button>
+    </div>
+  </div>
+
+  <!-- 登录 / 注册门 -->
+  <div id="authGate" class="auth-gate">
+    <div class="auth-card">
+      <div class="auth-logo">📝</div>
+      <h1 class="auth-title">抖音文字稿工作台</h1>
+      <p class="auth-sub">登录后使用，你的文案库与加工记录仅你自己可见</p>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-auth="login" type="button">登录</button>
+        <button class="auth-tab" data-auth="register" type="button">注册</button>
+      </div>
+      <form id="authForm" class="auth-form" autocomplete="off" novalidate>
+        <label class="auth-label">用户名</label>
+        <input id="authUsername" class="auth-input" type="text" placeholder="3-20 位，中英文 / 数字" />
+        <label class="auth-label auth-email-label hidden" id="authEmailLabel">邮箱（选填）</label>
+        <input id="authEmail" class="auth-input hidden" type="email" placeholder="用于找回密码（暂未启用）" />
+        <label class="auth-label">密码</label>
+        <input id="authPassword" class="auth-input" type="password" placeholder="至少 6 位" autocomplete="new-password" />
+        <div id="authError" class="auth-error hidden"></div>
+        <button id="authSubmit" class="btn btn-primary auth-submit" type="submit">登录</button>
+      </form>
+      <div class="auth-tip">首次使用请先切换到「注册」创建账户</div>
+    </div>
+  </div>
+
+  <script src="app.js?v=20260812p"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+# Render 部署配置（Blueprint）
+# 用法：GitHub 仓库连到 Render 后，选 "Blueprint"，会自动读取本文件。
+# 首次部署前，到 Render 控制台的 Environment 里添加 GROQ_API_KEY。
+services:
+  - type: web
+    name: douyin-transcribe
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      # GROQ_API_KEY 请在 Render 控制台手动填写（不要把真实 key 写进这里）
+      - key: GROQ_API_KEY
+        sync: false

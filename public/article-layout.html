@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我用 AI 花一小时做了个抖音转文字工具</title>
+<style>
+  body{margin:0;padding:0;background:#f2f2f2;padding-top:64px;}
+  .wx{max-width:677px;margin:0 auto;background:#fff;padding:28px 20px 48px;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;color:#333;font-size:16px;line-height:1.85;word-break:break-word;}
+  img{max-width:100%;}
+  /* 顶部工具栏 */
+  .toolbar{position:fixed;top:0;left:0;right:0;z-index:999;background:#fff;border-bottom:1px solid #eee;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  .toolbar-inner{max-width:677px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:10px;}
+  .copy-btn{flex:1;background:#fe2c55;color:#fff;border:none;border-radius:8px;padding:12px 16px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .2s;font-family:inherit;}
+  .copy-btn:hover{background:#e5274c;}
+  .copy-btn:active{transform:scale(.99);}
+  .copy-btn.ok{background:#10b981;}
+  .tip-btn{background:#f5f5f5;border:none;border-radius:8px;padding:12px 12px;font-size:13px;color:#666;cursor:pointer;white-space:nowrap;font-family:inherit;}
+  .tip-btn:hover{background:#ececec;}
+  /* 提示弹窗 */
+  .modal-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center;}
+  .modal-mask.show{display:flex;}
+  .modal{background:#fff;border-radius:12px;max-width:420px;width:90%;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.2);}
+  .modal h3{margin:0 0 12px;font-size:18px;}
+  .modal p{margin:0 0 10px;font-size:14px;color:#555;line-height:1.7;}
+  .modal ul{margin:8px 0 16px;padding-left:20px;font-size:14px;color:#555;line-height:1.8;}
+  .modal-close{width:100%;background:#fe2c55;color:#fff;border:none;border-radius:8px;padding:11px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .modal-close:hover{background:#e5274c;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="toolbar-inner">
+    <button class="copy-btn" id="copyBtn" type="button">
+      <span class="btn-ico">📋</span><span class="btn-label">一键复制到公众号</span>
+    </button>
+    <button class="tip-btn" id="tipBtn" type="button">使用说明</button>
+  </div>
+</div>
+
+<div class="wx">
+
+<h1 style="font-size:22px;font-weight:700;color:#1a1a1a;line-height:1.5;text-align:center;margin:0 0 8px;">我用 AI 花一小时做了个抖音转文字工具，把全过程拆给你看</h1>
+<p style="text-align:center;color:#999;font-size:13px;margin:0 0 12px;">晞珩online · 手把手实战</p>
+
+<p style="margin:0 0 18px;">刷到一条干货口播，想存成文字反复看。</p>
+<p style="margin:0 0 18px;">收藏等于吃灰，手动打字打到手酸，网上的转写工具要么收费，要么断句烂、要么加水印。</p>
+<p style="margin:0 0 18px;">这种破需求，我没自己写一行代码。打开 WorkBuddy，挂了两个抖音技能，把需求一说，一小时后工具跑起来了：粘贴链接，十几秒，一整篇带分段的文字稿就出来，能复制能下载，不登录、不收费。</p>
+<p style="margin:0 0 24px;">这篇不空谈，我把<strong style="color:#fe2c55;">从找技能、提需求、遇到报错、到迭代改 UI、再到接上 AI 和飞书</strong> 的全过程，按我自己的操作步骤原原本本拆给你看。你照着做，要么直接用上工具，要么学会怎么让 AI 帮你造一个。</p>
+
+<p style="text-align:center;color:#ccc;font-size:14px;letter-spacing:12px;margin:30px 0;">&middot; &middot; &middot;</p>
+
+<table cellspacing="0" cellpadding="0" border="0" style="margin:0 0 18px;border-collapse:collapse;"><tr><td style="background:#fe2c55;padding:8px 18px;border-radius:4px;"><h2 style="font-size:17px;font-weight:700;color:#fff;margin:0;line-height:1.5;">第一步：先找对"技能"，别让 AI 凭空干</h2></td></tr></table>
+<p style="margin:0 0 18px;">很多人用 AI 做东西做不成，是因为一上来就让它"给我做个 XX"，它脑子里没这个领域的东西，只能瞎编。</p>
+<p style="margin:0 0 18px;">WorkBuddy 里有个地方叫 <strong>SkillHub（技能中心）</strong>，别人把"怎么干某件事"的完整流程封装成了技能，你挂上它，AI 就等于提前学会了这门手艺。</p>
+<p style="margin:0 0 18px;">我是这么找的：</p>
+<div style="margin:20px 0;text-align:center;">
+<img src="https://cdn.jsdelivr.net/gh/Zorianchen/douyin-transcribe@main/article-images/1.png" style="width:100%;border-radius:6px;display:block;" alt="第一步">
+<p style="font-size:13px;color:#999;margin:8px 0 0;line-height:1.6;">在 SkillHub 搜索"抖音"，选用下载器和转文字两个技能</p>
+</div>
+<p style="margin:0 0 14px;">四个动作：</p>
+<p style="margin:0 0 10px;padding-left:10px;border-left:3px solid #fe2c55;">1、点左下角（或顶部）的 <strong>「专家·技能·连接器」</strong></p>
+<p style="margin:0 0 10px;padding-left:10px;border-left:3px solid #fe2c55;">2、搜索框直接搜 <strong>「抖音」</strong></p>
+<p style="margin:0 0 10px;padding-left:10px;border-left:3px solid #fe2c55;">3、进入 <strong>SkillHub</strong></p>
+<p style="margin:0 0 18px;padding-left:10px;border-left:3px solid #fe2c55;">4、把 <strong>「抖音下载器」</strong>和<strong>「抖音视频转文字」</strong>这两个技能选用上</p>
+<blockquote style="margin:20px 0;padding:14px 18px;background:#fff5f7;border-left:4px solid #fe2c55;border-radius:0 6px 6px 0;color:#666;font-size:15px;line-height:1.8;">为什么是这两个？一个负责把抖音视频的真实地址、字幕、信息抓下来，一个负责把没有字幕的视频用语音识别转成文字。两个一配，抖音转文字这件事的底层能力就齐了。</blockquote>
+<p style="margin:0 0 24px;"><strong style="color:#fe2c55;">这一步的关键：先备料，再开工。</strong>你让 AI 干一件它不熟悉的事之前，先去技能中心搜一圈，有没有现成的能力可以挂。这能省掉后面一半的坑。</p>
+
+<p style="text-align:center;color:#ccc;font-size:14px;letter-spacing:12px;margin:30px 0;">&middot; &middot; &middot;</p>
+
+<table cellspacing="0" cellpadding="0" border="0" style="margin:0 0 18px;border-collapse:collapse;"><tr><td style="background:#fe2c55;padding:8px 18px;border-radius:4px;"><h2 style="font-size:17px;font-weight:700;color:#fff;margin:0;line-height:1.5;">第二步：把需求一次说清楚，让它去做</h2></td></tr></table>
+<p style="margin:0 0 18px;">技能挂好后，就回到对话框，把你要的东西<strong>像给外包提需求一样</strong>写清楚。</p>
+<p style="margin:0 0 18px;">我当时是这么发的（这段话你可以直接抄去改）：</p>
+<blockquote style="margin:20px 0;padding:14px 18px;background:#f8f8f8;border-left:4px solid #333;border-radius:0 6px 6px 0;color:#555;font-size:15px;line-height:1.85;">请开发一个网站，用户粘贴抖音视频链接后，自动提取完整文字稿并展示。要包含链接输入区、提交按钮、结果展示区；校验链接格式；提取中显示加载状态；失败给清晰错误提示；结果按时间分段显示；提供一键复制和下载 txt；界面简洁、响应式适配手机；不需要登录；确保文字稿完整，不遗漏字幕或正文。</blockquote>
+<p style="margin:0 0 18px;">注意我没有说"用什么技术栈""几个文件"，我只说<strong>我要什么效果</strong>。技术选型让它自己定。</p>
+<div style="margin:20px 0;text-align:center;">
+<img src="https://cdn.jsdelivr.net/gh/Zorianchen/douyin-transcribe@main/article-images/2.png" style="width:100%;border-radius:6px;display:block;" alt="第二步">
+<p style="font-size:13px;color:#999;margin:8px 0 0;line-height:1.6;">挂载技能后发送需求，AI 自动完成开发并启动服务</p>
+</div>
+<p style="margin:0 0 18px;">然后它就开始干了：建项目、写后端抓取、写前端页面、装依赖、启动服务。大概一个小时，给我回了一句：</p>
+<blockquote style="margin:20px 0;padding:14px 18px;background:#f0f9f0;border-left:4px solid #2ecc71;border-radius:0 6px 6px 0;color:#555;font-size:15px;line-height:1.8;">抖音文字稿提取网站已完成，已在 http://localhost:3000 运行</blockquote>
+<p style="margin:0 0 18px;">浏览器打开，真能用。链接粘进去，文字稿就出来了。</p>
+<p style="margin:0 0 24px;"><strong style="color:#fe2c55;">很多人卡在这一步，是因为需求太模糊</strong>（"帮我做个转文字的"），AI 只能猜。你把"要有什么、不要什么、失败了怎么办"讲明白，它交付的东西天差地别。</p>
+
+<p style="text-align:center;color:#ccc;font-size:14px;letter-spacing:12px;margin:30px 0;">&middot; &middot; &middot;</p>
+
+<table cellspacing="0" cellpadding="0" border="0" style="margin:0 0 18px;border-collapse:collapse;"><tr><td style="background:#fe2c55;padding:8px 18px;border-radius:4px;"><h2 style="font-size:17px;font-weight:700;color:#fff;margin:0;line-height:1.5;">第三步：别它说"成功了"你就信，逐项验收</h2></td></tr></table>
+<p style="margin:0 0 18px;">AI 最擅长的事之一，就是<strong>自信地告诉你它做完了，但细节里全是窟窿</strong>。所以它交付后，我没急着高兴，而是对着自己当初的需求一条条对。</p>
+<div style="margin:20px 0;text-align:center;">
+<img src="https://cdn.jsdelivr.net/gh/Zorianchen/douyin-transcribe@main/article-images/3.png" style="width:100%;border-radius:6px;display:block;" alt="第三步">
+<p style="font-size:13px;color:#999;margin:8px 0 0;line-height:1.6;">功能对照表，以及开发中解决的两个关键技术问题</p>
+</div>
+<p style="margin:0 0 14px;">这是它给我的实现对照，我一条条验：</p>
+<p style="margin:0 0 8px;">✅ 链接输入、格式校验、加载状态、错误提示</p>
+<p style="margin:0 0 8px;">✅ 按时间分段、一键复制、下载 txt</p>
+<p style="margin:0 0 18px;">✅ 响应式、免登录</p>
+<p style="margin:0 0 18px;">功能确实都在。但真正有含金量的，是它在做的过程中自己撞上来、又解决掉的<strong>一个硬骨头</strong>，这才是这类工具能不能跑通的命门：</p>
+<p style="margin:0 0 18px;"><strong style="color:#fe2c55;">抖音反爬。</strong>直接请求电脑版抖音页面，拿到的是个空壳——电脑版是单页应用，内容全靠浏览器加载完再用 JS 填进去，程序去抓只能抓个架子，旧接口也早废了。最后是换成请求<strong>手机版分享页</strong>，服务器把数据直接渲染在页面里，一次就通。</p>
+<blockquote style="margin:20px 0;padding:14px 18px;background:#fff5f7;border-left:4px solid #fe2c55;border-radius:0 6px 6px 0;color:#555;font-size:15px;line-height:1.85;"><strong>这一步我想强调的是：AI 给你的不是成品，是"待验收的初稿"。</strong>你要做的不是替它写代码，而是对着需求逐条验，在它卡住的地方知道该往哪推。它说"成功了"，你得自己点一遍。</blockquote>
+
+<p style="text-align:center;color:#ccc;font-size:14px;letter-spacing:12px;margin:30px 0;">&middot; &middot; &middot;</p>
+
+<table cellspacing="0" cellpadding="0" border="0" style="margin:0 0 18px;border-collapse:collapse;"><tr><td style="background:#fe2c55;padding:8px 18px;border-radius:4px;"><h2 style="font-size:17px;font-weight:700;color:#fff;margin:0;line-height:1.5;">第四步：一定会报错，把它当成调试搭档</h2></td></tr></table>
+<p style="margin:0 0 18px;">工具跑起来，我兴冲冲拿了条七分多钟的视频去测——结果翻车了，页面提示"网络异常或服务不可用"。</p>
+<div style="margin:20px 0;text-align:center;">
+<img src="https://cdn.jsdelivr.net/gh/Zorianchen/douyin-transcribe@main/article-images/4.png" style="width:100%;border-radius:6px;display:block;" alt="第四步">
+<p style="font-size:13px;color:#999;margin:8px 0 0;line-height:1.6;">报错排查：不是提取逻辑问题，而是后台进程退出了</p>
+</div>
+<p style="margin:0 0 18px;">要是以前我可能就放弃了。但这次我把报错截图直接丢回给它，让它查。</p>
+<p style="margin:0 0 18px;">查出来的真相有点反直觉：<strong>不是提取逻辑有问题</strong>。我把那条视频单独跑了一遍，识别其实是成功的——<strong style="color:#fe2c55;">448 秒的视频，转出 256 段、2198 个字，耗时 12.3 秒</strong>。</p>
+<p style="margin:0 0 18px;">真正的原因是：服务进程跟着启动它的会话一起退出了，所以第二次请求时后台已经没人了。</p>
+<p style="margin:0 0 14px;">于是我让它做了两件事：</p>
+<p style="margin:0 0 10px;padding-left:10px;border-left:3px solid #fe2c55;">1、给服务加<strong>进程级错误捕获</strong>，单个请求出错不再拖垮整个服务；</p>
+<p style="margin:0 0 18px;padding-left:10px;border-left:3px solid #fe2c55;">2、做了一个 <strong>「启动服务.bat」</strong>，双击在独立黑窗口里运行，窗口不关，服务就一直在。</p>
+<p style="margin:0 0 18px;">修完再测，稳了。</p>
+<blockquote style="margin:20px 0;padding:14px 18px;background:#fff5f7;border-left:4px solid #fe2c55;border-radius:0 6px 6px 0;color:#555;font-size:15px;line-height:1.85;"><strong>这一步是大多数人用 AI 做东西的分水岭。</strong>报错不可怕，可怕的是一报错就觉得"这工具不行"。你要做的是把错误信息原样喂回去，让它定位、让它修，你负责判断它说的原因对不对。它是个手很快但偶尔不靠谱的搭档，不是一锤子买卖的外包。</blockquote>
+
+<p style="text-align:center;color:#ccc;font-size:14px;letter-spacing:12px;margin:30px 0;">&middot; &middot; &middot;</p>
+
+<table cellspacing="0" cellpadding="0" border="0" style="margin:0 0 18px;border-collapse:collapse;"><tr><td style="background:#fe2c55;padding:8px 18px;border-radius:4px;"><h2 style="font-size:17px;font-weight:700;color:#fff;margin:0;line-height:1.5;">第五步：接着提需求，让它越用越顺手</h2></td></tr></table>
+<p style="margin:0 0 18px;">能用之后，我又提了两个真实使用中冒出来的需求。</p>
+<p style="margin:0 0 18px;"><strong style="color:#fe2c55;">第一个：我要一份不带时间戳的纯净稿。</strong></p>
+<p style="margin:0 0 18px;">它默认给的是"[00:12] 某某某"这种带时间的分段，我想把稿子整段复制走发人、存档，带时间戳太脏。于是我跟它说："我还要一份完整的文字稿，复制的时候没有时间。"</p>
+<p style="margin:0 0 14px;">它就加了一块纯净文字稿区，按句子自动合并成自然段，并多了三个按钮：</p>
+<p style="margin:0 0 8px;padding-left:10px;border-left:3px solid #fe2c55;"><strong>复制文字稿</strong>：纯净正文，不带任何时间戳</p>
+<p style="margin:0 0 8px;padding-left:10px;border-left:3px solid #fe2c55;"><strong>下载 .txt</strong>：存成本地文件</p>
+<p style="margin:0 0 18px;padding-left:10px;border-left:3px solid #fe2c55;"><strong>复制（含时间戳）</strong>：需要对时间点的时候用</p>
+<p style="margin:0 0 18px;"><strong style="color:#fe2c55;">第二个：UI 被按钮撑坏了。</strong></p>
+<p style="margin:0 0 18px;">第一次改版后，三个按钮挤一行，后面两个按钮的字被挤成了竖排。我截了个图圈出来发给它，它立刻把布局改成：主按钮独占一整行，两个次要按钮各占一半，加了不换行规则，手机上还会自动纵向堆叠。</p>
+<div style="margin:20px 0;text-align:center;">
+<img src="https://cdn.jsdelivr.net/gh/Zorianchen/douyin-transcribe@main/article-images/5.png" style="width:100%;border-radius:6px;display:block;" alt="第五步">
+<p style="font-size:13px;color:#999;margin:8px 0 0;line-height:1.6;">增加无时间戳纯净稿，三个按钮布局重新调整</p>
+</div>
+<p style="margin:0 0 24px;">你看，从"能用"到"好用"，就是这样一轮一轮喂需求喂出来的。<strong style="color:#fe2c55;">别想着一次到位，先用起来，哪里不爽改哪里。</strong></p>
+
+<p style="text-align:center;color:#ccc;font-size:14px;letter-spacing:12px;margin:30px 0;">&middot; &middot; &middot;</p>
+
+<table cellspacing="0" cellpadding="0" border="0" style="margin:0 0 18px;border-collapse:collapse;"><tr><td style="background:#fe2c55;padding:8px 18px;border-radius:4px;"><h2 style="font-size:17px;font-weight:700;color:#fff;margin:0;line-height:1.5;">第六步：从一个页面，长成一个工作台</h2></td></tr></table>
+<p style="margin:0 0 18px;">工具用了几天，新的麻烦冒出来了：我转了十几条视频，结果全堆在一个页面里，想找回之前那条得翻半天；有时候想一次性丢五六个链接进去，也只能一条一条粘。</p>
+<p style="margin:0 0 18px;">我跟它说："我要一个侧边栏，分成单条转写、批量转写、文案库三个入口。转写过的东西自动存进文案库，随时能搜、能看、能再加工。"</p>
+<p style="margin:0 0 18px;">没一会儿，整个界面换成了左右分栏的工作台：</p>
+<div style="margin:20px 0;text-align:center;">
+<img src="https://cdn.jsdelivr.net/gh/Zorianchen/douyin-transcribe@main/article-images/8.png" style="width:100%;border-radius:6px;display:block;" alt="新版工作台">
+<p style="font-size:13px;color:#999;margin:8px 0 0;line-height:1.6;">左侧侧边栏三视图：单条转写、批量转写、文案库</p>
+</div>
+<p style="margin:0 0 18px;">左边是三个导航，右边是对应视图，互不干扰。</p>
+<p style="margin:0 0 18px;"><strong style="color:#fe2c55;">单条转写</strong>保持原来最轻的样子——粘链接、出结果、复制下载。但结果区下方多了一排 AI 智能加工入口（后面第七步细讲），还多了一个"上传到飞书"按钮。</p>
+<p style="margin:0 0 18px;"><strong style="color:#fe2c55;">批量转写</strong>是我这次最想要的：把多个抖音链接（或者整段分享文案）一次粘进去，每行一个，它自动排队处理，每条的状态实时刷新——排队中、识别中、已完成、失败，一目了然。转完全部自动入库，不用手动存。</p>
+<div style="margin:20px 0;text-align:center;">
+<img src="https://cdn.jsdelivr.net/gh/Zorianchen/douyin-transcribe@main/article-images/9.png" style="width:100%;border-radius:6px;display:block;" alt="批量转写">
+<p style="font-size:13px;color:#999;margin:8px 0 0;line-height:1.6;">一次粘贴多个链接，自动排队处理并入库</p>
+</div>
+<p style="margin:0 0 18px;"><strong style="color:#fe2c55;">文案库</strong>就是本地的素材池。所有转写过的视频按卡片排列，显示标题、作者、时长、字数和正文预览，顶部有搜索框，输关键词即时过滤。每条卡片下方有两个按钮："AI 加工"和"上传飞书"，卡片底部还会显示这条记录已经做过哪些 AI 分析，以及飞书上传状态。</p>
+<div style="margin:20px 0;text-align:center;">
+<img src="https://cdn.jsdelivr.net/gh/Zorianchen/douyin-transcribe@main/article-images/10.png" style="width:100%;border-radius:6px;display:block;" alt="文案库">
+<p style="font-size:13px;color:#999;margin:8px 0 0;line-height:1.6;">转写记录卡片化，支持搜索、AI 加工、上传飞书</p>
+</div>
+<p style="margin:0 0 24px;">到这一步，它已经不是一个"转写页面"了，是一个<strong>素材处理工作台</strong>。转写只是入口，后面的加工、管理、归档才是真正花时间的地方。<strong style="color:#fe2c55;">工具不要追求一步到位，但要让它跟着你的使用痕迹长。</strong></p>
+
+<p style="text-align:center;color:#ccc;font-size:14px;letter-spacing:12px;margin:30px 0;">&middot; &middot; &middot;</p>
+
+<table cellspacing="0" cellpadding="0" border="0" style="margin:0 0 18px;border-collapse:collapse;"><tr><td style="background:#fe2c55;padding:8px 18px;border-radius:4px;"><h2 style="font-size:17px;font-weight:700;color:#fff;margin:0;line-height:1.5;">第七步：AI 不止能转写，还能帮你想</h2></td></tr></table>
+<p style="margin:0 0 18px;">转写解决的是"把视频变成字"，但真正费脑子的是后面——这条视频哪里值得抄？结构是什么样的？戳了什么痛点？能改写成什么选题？</p>
+<p style="margin:0 0 18px;">以前这些全靠我自己边看边记。现在我让 AI 在工具里直接干。</p>
+<p style="margin:0 0 18px;">在任何一条转写结果上点"AI 加工"，右侧会滑出一个抽屉，六个动作排两列：</p>
+<div style="margin:20px 0;text-align:center;">
+<img src="https://cdn.jsdelivr.net/gh/Zorianchen/douyin-transcribe@main/article-images/11.png" style="width:100%;border-radius:6px;display:block;" alt="AI加工抽屉">
+<p style="font-size:13px;color:#999;margin:8px 0 0;line-height:1.6;">六个 AI 动作：金句、结构、痛点、选题、小红书、公众号</p>
+</div>
+<p style="margin:0 0 14px;">六个动作分别干这些事：</p>
+<p style="margin:0 0 8px;padding-left:10px;border-left:3px solid #fe2c55;"><strong>提炼金句</strong>：把整条视频里最有传播力的句子挑出来，直接能当文案素材</p>
+<p style="margin:0 0 8px;padding-left:10px;border-left:3px solid #fe2c55;"><strong>拆解爆款结构</strong>：从开头钩子、核心观点、论证方式、情绪节奏、结尾引导，一层一层拆开，告诉你它为什么让人看得完</p>
+<p style="margin:0 0 8px;padding-left:10px;border-left:3px solid #fe2c55;"><strong>挖掘痛点</strong>：列出这条视频戳中的痛点清单，标出"最痛的那一个"，并给出切入角度</p>
+<p style="margin:0 0 8px;padding-left:10px;border-left:3px solid #fe2c55;"><strong>选题建议</strong>：基于这条视频的主题，生成 8-12 个可延展的选题，再推荐 3 个最值得做的</p>
+<p style="margin:0 0 8px;padding-left:10px;border-left:3px solid #fe2c55;"><strong>小红书笔记</strong>：直接改写成小红书风格的笔记草稿</p>
+<p style="margin:0 0 18px;padding-left:10px;border-left:3px solid #fe2c55;"><strong>公众号大纲</strong>：生成公众号文章的结构大纲</p>
+<p style="margin:0 0 18px;">比如拆解结构，它给出的不是泛泛而谈，而是按【开头钩子】【核心观点】【论证方式】【情绪节奏】【结尾引导】【可复用点】六个标签逐项输出：</p>
+<div style="margin:20px 0;text-align:center;">
+<img src="https://cdn.jsdelivr.net/gh/Zorianchen/douyin-transcribe@main/article-images/12.png" style="width:100%;border-radius:6px;display:block;" alt="结构拆解">
+<p style="font-size:13px;color:#999;margin:8px 0 0;line-height:1.6;">按标签逐项拆解爆款结构，可直接复用</p>
+</div>
+<p style="margin:0 0 18px;">这些分析结果会<strong>自动保存在那条记录里</strong>，下次打开还在。你做了几个动作，文案库卡片上就亮几个标签，不会丢。</p>
+<p style="margin:0 0 18px;">AI 这一层我做成了<strong>可插拔的</strong>。默认用内置的 Groq 大模型（免费额度，开箱即用），如果你有自己的 OpenAI 兼容接口——公司内部模型、第三方兼容 API——在设置里填一下 API 地址、密钥和模型名，所有 AI 动作就全部走你自己的模型。</p>
+<div style="margin:20px 0;text-align:center;">
+<img src="https://cdn.jsdelivr.net/gh/Zorianchen/douyin-transcribe@main/article-images/14.png" style="width:100%;border-radius:6px;display:block;" alt="AI模型设置">
+<p style="font-size:13px;color:#999;margin:8px 0 0;line-height:1.6;">支持自定义 OpenAI 兼容接口，不填则用内置免费模型</p>
+</div>
+<blockquote style="margin:20px 0;padding:14px 18px;background:#fff5f7;border-left:4px solid #fe2c55;border-radius:0 6px 6px 0;color:#555;font-size:15px;line-height:1.85;"><strong>这一步我最大的感受：AI 工具的价值不在"生成"，在"接住你的下游"。</strong>转写只是把素材搬进门，真正省时间的是后面那些"看完之后要动脑"的环节。你让 AI 把这些环节也包了，工具就从"录制笔"变成了"策划助理"。</blockquote>
+
+<p style="text-align:center;color:#ccc;font-size:14px;letter-spacing:12px;margin:30px 0;">&middot; &middot; &middot;</p>
+
+<table cellspacing="0" cellpadding="0" border="0" style="margin:0 0 18px;border-collapse:collapse;"><tr><td style="background:#fe2c55;padding:8px 18px;border-radius:4px;"><h2 style="font-size:17px;font-weight:700;color:#fff;margin:0;line-height:1.5;">第八步：让文案自动飞进飞书多维表格</h2></td></tr></table>
+<p style="margin:0 0 18px;">最后一块拼图，是归档。</p>
+<p style="margin:0 0 18px;">我自己在用飞书多维表格管素材库——每条视频对应一行，字段包括标题、链接、作者、文案原文、金句、结构拆解、痛点、选题建议、我的启发……一共二十多个字段。以前转写完，得手动复制粘贴到每一列，一条视频折腾五六分钟。</p>
+<p style="margin:0 0 18px;">我跟它说："给我接飞书。我填 app_id、app_secret 和多维表格链接，你自动鉴权连上；表里缺什么字段你自动建；文案库里每条记录旁边放一个按钮，点一下就按字段映射写进去，AI 分析结果也一起带过去。"</p>
+<p style="margin:0 0 18px;"><strong style="color:#fe2c55;">连接只需要三个东西</strong>：飞书应用的 App ID、App Secret，以及多维表格的链接（Base 链接和知识库链接都支持，自动解析）。</p>
+<div style="margin:20px 0;text-align:center;">
+<img src="https://cdn.jsdelivr.net/gh/Zorianchen/douyin-transcribe@main/article-images/18.png" style="width:100%;border-radius:6px;display:block;" alt="飞书连接">
+<p style="font-size:13px;color:#999;margin:8px 0 0;line-height:1.6;">填入 App ID、Secret 和表格链接，一键测试连接（敏感信息已打码）</p>
+</div>
+<p style="margin:0 0 18px;">填完点"测试连接"，它会自动鉴权、解析出 app_token / table_id / view_id、拉取现有字段列表。知识库链接会先调 wiki 接口换成 bitable 的 app_token，再去连表。</p>
+<p style="margin:0 0 18px;"><strong style="color:#fe2c55;">字段映射是可视化的。</strong>设置里"字段映射"标签页，左边是工具内部字段名，右边是飞书表里对应的列名，想改哪列直接改输入框。</p>
+<div style="margin:20px 0;text-align:center;">
+<img src="https://cdn.jsdelivr.net/gh/Zorianchen/douyin-transcribe@main/article-images/15.png" style="width:100%;border-radius:6px;display:block;" alt="字段映射">
+<p style="font-size:13px;color:#999;margin:8px 0 0;line-height:1.6;">内部字段与飞书列名一一对应，可自由修改</p>
+</div>
+<p style="margin:0 0 18px;">点"同步字段"时，它会对比映射表和飞书现有列：<strong>缺的自动建，重复的标记出来让你选删哪个，已有的不动。</strong>而且是"类型感知"的——文本列写文本、数字列写数字、日期列写毫秒时间戳、超链接列写链接对象，不会把日期写成字符串。</p>
+<p style="margin:0 0 18px;">文案库里每条卡片有"上传飞书"按钮，点一下整条记录（原文 + 六个 AI 分析结果）就按映射写进飞书。成功后按钮变"已上传"并显示记录 ID。顶部还有"上传全部到飞书"批量入库。</p>
+<blockquote style="margin:20px 0;padding:14px 18px;background:#f0f9f0;border-left:4px solid #2ecc71;border-radius:0 6px 6px 0;color:#555;font-size:15px;line-height:1.85;">更细的处理：AI 返回的结构分析是一整段文本，但飞书表里"开头钩子""核心观点""可复用点"是分开的三列。写入时自动用正则把【开头钩子】【核心观点】【可复用点】拆出来分别填入——不是一坨文本扔进去完事。</blockquote>
+<p style="margin:0 0 18px;">这是我实际上传后的飞书多维表格，序号、视频标题、视频链接、作者、文案原文、开头钩子、核心痛点、解决方案、情绪曲线……每一列都按字段映射自动填好了：</p>
+<div style="margin:20px 0;text-align:center;">
+<img src="https://cdn.jsdelivr.net/gh/Zorianchen/douyin-transcribe@cd6c76a/article-images/17.png" style="width:100%;border-radius:6px;display:block;" alt="飞书表格记录">
+<p style="font-size:13px;color:#999;margin:8px 0 0;line-height:1.6;">上传后飞书多维表格中的素材记录，各字段自动填入</p>
+</div>
+<p style="margin:0 0 12px;text-align:center;font-size:15px;">至此整个链路闭合了：</p>
+<table cellspacing="0" cellpadding="0" border="0" style="margin:20px auto;width:100%;border-collapse:collapse;background:#fff5f7;border-left:4px solid #fe2c55;"><tr><td style="padding:24px 20px;text-align:center;">
+<p style="margin:0;font-size:16px;font-weight:600;color:#333;line-height:2.2;">抖音链接 → 文字稿 → AI 加工<br>（金句 / 结构 / 痛点 / 选题）<br>→ 一键写入飞书素材库</p>
+</td></tr></table>
+<p style="margin:0 0 24px;">从"看到一条好视频"到"素材进库、分析到位"，以前至少二十分钟的手工活，现在两三分钟。</p>
+
+<p style="text-align:center;color:#ccc;font-size:14px;letter-spacing:12px;margin:30px 0;">&middot; &middot; &middot;</p>
+
+<table cellspacing="0" cellpadding="0" border="0" style="margin:0 0 18px;border-collapse:collapse;"><tr><td style="background:#333;padding:8px 18px;border-radius:4px;"><h2 style="font-size:17px;font-weight:700;color:#fff;margin:0;line-height:1.5;">你想直接用？照着这几步来</h2></td></tr></table>
+<p style="margin:0 0 18px;">如果你不想走一遍制作过程，只想把工具用起来，照着下面做。</p>
+<p style="margin:0 0 14px;"><strong>准备两样东西：</strong></p>
+<p style="margin:0 0 12px;">1、<strong>Node.js</strong>：去 nodejs.org 下载 LTS 版本装好，命令行输 <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:14px;color:#fe2c55;">node -v</code> 能看到版本号即可。</p>
+<p style="margin:0 0 18px;">2、<strong>ffmpeg</strong>：Windows 去 gyan.dev 下载 full 版本，解压后把 bin 目录加到系统环境变量 PATH。</p>
+<blockquote style="margin:0 0 18px;padding:12px 16px;background:#f0f9f0;border-left:4px solid #2ecc71;border-radius:0 6px 6px 0;color:#555;font-size:15px;line-height:1.8;">💡 语音识别和 AI 加工用的 Key <strong>项目里已经内置了，开箱即用，你不用自己申请</strong>。想用自己的额度或其他 OpenAI 兼容模型，在设置的"AI 模型"里填 API 地址、密钥和模型名即可。飞书联动是可选的，不用也完全不影响转写和 AI 加工。</blockquote>
+<blockquote style="margin:0 0 18px;padding:12px 16px;background:#fff8e6;border-left:4px solid #f5a623;border-radius:0 6px 6px 0;color:#555;font-size:15px;line-height:1.8;">⚠️ <strong>关于代理：</strong>语音识别用的是 Groq（海外服务），国内网络直连可能不通。<br>• <strong>本地用</strong>：开着 Clash 之类的代理工具就行，程序自动读取系统代理，不用额外配置。<br>• <strong>国内服务器</strong>：在 Cloudflare 建一个免费 Worker 做反代，在 <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:14px;color:#fe2c55;">.env</code> 里加一行 <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:14px;color:#fe2c55;">GROQ_BASE_URL=你的Worker地址</code> 即可，项目里有现成脚本和说明。<br>• <strong>海外服务器</strong>（如 Render）：<strong>不需要任何代理</strong>，直接跑。<br>• 飞书、抖音、DeepSeek 等国内服务自动直连，不受影响。</blockquote>
+<p style="margin:0 0 14px;"><strong>然后：</strong></p>
+<p style="margin:0 0 10px;padding-left:10px;border-left:3px solid #999;">1、下载源码 👉 <strong>github.com/Zorianchen/douyin-transcribe</strong>，解压到本地文件夹。</p>
+<p style="margin:0 0 10px;padding-left:10px;border-left:3px solid #999;">2、文件夹地址栏输 <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:14px;color:#fe2c55;">cmd</code> 回车，运行 <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:14px;color:#fe2c55;">npm install</code></p>
+<p style="margin:0 0 10px;padding-left:10px;border-left:3px solid #999;">3、双击 <strong>「启动服务.bat」</strong>，看到本地地址就成了。</p>
+<p style="margin:0 0 18px;padding-left:10px;border-left:3px solid #999;">4、浏览器打开，把抖音链接（甚至整段分享文案）粘进去，它会自动识别链接，点「提取文字稿」。</p>
+
+<div style="margin:20px 0;text-align:center;">
+<img src="https://cdn.jsdelivr.net/gh/Zorianchen/douyin-transcribe@main/article-images/6.png" style="width:100%;border-radius:6px;display:block;" alt="输入页">
+<p style="font-size:13px;color:#999;margin:8px 0 0;line-height:1.6;">粘贴整段分享文案，自动识别出抖音链接</p>
+</div>
+
+<p style="margin:0 0 18px;">等十几秒，结果就出来了：上面是按时间分段的稿子，下面是一份<strong style="color:#fe2c55;">不带任何时间戳的完整文字稿</strong>，三个按钮各管一摊——复制纯净稿、下载 txt、复制带时间戳版本。</p>
+
+<div style="margin:20px 0;text-align:center;">
+<img src="https://cdn.jsdelivr.net/gh/Zorianchen/douyin-transcribe@main/article-images/7.png" style="width:100%;border-radius:6px;display:block;" alt="结果页">
+<p style="font-size:13px;color:#999;margin:8px 0 0;line-height:1.6;">无时间戳完整文字稿，一键复制或下载</p>
+</div>
+
+<p style="margin:0 0 24px;">转写完的记录会自动进文案库，想做 AI 加工就点卡片上的"AI 加工"，想归档飞书就点"上传飞书"。整个过程<strong>不登录、不上传你的数据到第三方</strong>，视频和临时文件都在你自己电脑上处理。</p>
+
+<p style="margin:32px 0 20px;text-align:center;font-size:20px;font-weight:800;color:#1a1a1a;letter-spacing:2px;">最后</p>
+<p style="margin:0 0 18px;">说实话，这工具核心代码也就几百行，不算多复杂。</p>
+<p style="margin:0 0 18px;">但做下来我最大的感受是：<strong style="color:#fe2c55;">现在用 AI 造东西，难的早就不是写代码了。</strong>你把需求一说，它几秒能给你生成一大堆。真正难的是三件事——</p>
+
+<table cellspacing="0" cellpadding="0" border="0" style="margin:24px auto;width:100%;border-collapse:collapse;background:#fff5f7;border-left:4px solid #fe2c55;"><tr><td style="padding:20px;">
+<p style="margin:0 0 14px;"><strong style="color:#fe2c55;font-size:16px;">找对能力</strong><br><span style="color:#666;font-size:15px;">先挂技能，别让它凭空干</span></p>
+<p style="margin:0 0 14px;"><strong style="color:#fe2c55;font-size:16px;">说得清楚</strong><br><span style="color:#666;font-size:15px;">把要什么、不要什么讲明白</span></p>
+<p style="margin:0;"><strong style="color:#fe2c55;font-size:16px;">验得出来、修得下去</strong><br><span style="color:#666;font-size:15px;">它说成功你别全信，报错了你别放弃</span></p>
+</td></tr></table>
+
+<p style="margin:0 0 18px;">它像一个手很快但不太靠谱的实习生。你要做的从来不是替它干活，而是当那个会验收、会纠偏、会在它卡住时推一把的人。</p>
+<p style="margin:0 0 18px;">第一版只是起点。真正让工具变得值钱的，是你用着用着冒出来的那些"要是能再多一步就好了"——想要批量、想要 AI 帮你想、想要自动归档到飞书。每一个这种念头，丢回给它，都是下一轮迭代。</p>
+<p style="margin:0 0 18px;">源码和启动脚本都放 GitHub 了（<strong>github.com/Zorianchen/douyin-transcribe</strong>），想用的直接拿走，想改成自己版本的随便折腾。</p>
+<p style="margin:0 0 8px;text-align:center;color:#999;font-size:15px;">有问题留言区聊 👇</p>
+
+</div>
+
+<!-- 使用说明弹窗 -->
+<div class="modal-mask" id="modalMask">
+  <div class="modal">
+    <h3>复制后怎么发到公众号</h3>
+    <p>点「一键复制到公众号」后，全文（含颜色、引用块、卡片样式）会以富文本复制：</p>
+    <ul>
+      <li>打开微信公众平台，新建图文</li>
+      <li>在编辑区按 <b>Ctrl+V</b> 粘贴，排版自动保留</li>
+      <li>图片位置需在公众号后台单独上传替换（微信不允许本地图直接粘贴）</li>
+    </ul>
+    <p style="color:#fe2c55;">提示：建议用 Chrome / Edge 浏览器。若粘贴后样式丢失，换这两个浏览器即可。</p>
+    <button class="modal-close" id="modalClose" type="button">我知道了</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var btn = document.getElementById('copyBtn');
+  var label = btn.querySelector('.btn-label');
+  var content = document.querySelector('.wx');
+  var tipBtn = document.getElementById('tipBtn');
+  var mask = document.getElementById('modalMask');
+  var closeBtn = document.getElementById('modalClose');
+
+  tipBtn.addEventListener('click', function(){ mask.classList.add('show'); });
+  closeBtn.addEventListener('click', function(){ mask.classList.remove('show'); });
+  mask.addEventListener('click', function(e){ if(e.target===mask) mask.classList.remove('show'); });
+
+  function flashOk(){
+    btn.classList.add('ok');
+    label.textContent = '✓ 已复制，去公众号粘贴';
+    setTimeout(function(){
+      btn.classList.remove('ok');
+      label.textContent = '一键复制到公众号';
+    }, 2500);
+  }
+
+  btn.addEventListener('click', async function(){
+    var html = content.innerHTML;
+    // 构造纯文本降级
+    var text = content.innerText || content.textContent;
+    try {
+      if (navigator.clipboard && window.ClipboardItem) {
+        var blobHtml = new Blob([html], {type:'text/html'});
+        var blobText = new Blob([text], {type:'text/plain'});
+        var item = new ClipboardItem({'text/html': blobHtml, 'text/plain': blobText});
+        await navigator.clipboard.write([item]);
+        flashOk();
+      } else {
+        // 降级：选中内容后 execCommand
+        var range = document.createRange();
+        range.selectNodeContents(content);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        var ok = document.execCommand('copy');
+        sel.removeAllRanges();
+        if (ok) flashOk(); else alert('复制失败，请手动全选（Ctrl+A）复制');
+      }
+    } catch(e) {
+      // 非 https 或旧浏览器降级
+      try {
+        var range2 = document.createRange();
+        range2.selectNodeContents(content);
+        var sel2 = window.getSelection();
+        sel2.removeAllRanges();
+        sel2.addRange(range2);
+        var ok2 = document.execCommand('copy');
+        sel2.removeAllRanges();
+        if (ok2) flashOk(); else alert('复制失败：' + e.message);
+      } catch(e2){
+        alert('复制失败，请手动全选复制：' + e2.message);
+      }
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
