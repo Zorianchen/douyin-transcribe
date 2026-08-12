@@ -926,7 +926,7 @@ async function loadAdminTemplate() {
     else if (tpl.feishu && tpl.feishu.app_id) parts.push('飞书：已填 App ID（未完全连接）');
     else parts.push('飞书：未配置');
     if (tpl.ai && tpl.ai.enabled) parts.push('AI：' + escapeHtml(tpl.ai.model || '自定义模型') + (tpl.ai.has_key ? '' : '（缺 Key）'));
-    else parts.push('AI：内置 Groq');
+    else parts.push('AI：未启用');
     statusEl.textContent = parts.join('　|　');
   } catch (e) {
     statusEl.textContent = '模板状态加载失败';
@@ -996,7 +996,7 @@ async function viewUserConfig(id) {
     rows.push(['飞书 App ID', feishu.app_id || '（空）']);
     rows.push(['飞书连接状态', feishu.configured ? '已连接（' + (feishu.table_id || '') + '）' : '未连接']);
     rows.push(['飞书表格', feishu.table_id || '（空）']);
-    rows.push(['AI 模型', ai.enabled ? (ai.model || '自定义') : '内置 Groq']);
+    rows.push(['AI 模型', ai.enabled ? (ai.model || '自定义') : '未启用']);
     rows.push(['AI API 地址', ai.base_url || '（默认）']);
     rows.push(['AI API Key', ai.has_key ? '已配置' : '（空）']);
     rows.push(['AI 温度', ai.temperature != null ? ai.temperature : 0.6]);
@@ -2534,7 +2534,7 @@ $('feishuConnectBtn').addEventListener('click', async () => {
   status.textContent = '连接中…'; status.className = 'form-status';
   const body = {
     app_id: $('feishuAppId').value.trim(),
-    app_secret: $('feishuAppSecret').value === '________' ? undefined : $('feishuAppSecret').value.trim(),
+    app_secret: $('feishuAppSecret').value === SECRET_PLACEHOLDER ? undefined : $('feishuAppSecret').value.trim(),
     url: $('feishuUrl').value.trim()
   };
   try {
@@ -2598,9 +2598,9 @@ $('aiTestBtn').addEventListener('click', async () => {
     model: $('aiModel').value.trim(),
     temperature: parseFloat($('aiTemp').value) || 0.6
   };
-  // 只有填了新 key 才发送，否则用已保存的
+  // 只有填了新 key 才发送，否则用已保存的（占位符表示未修改，不要覆盖）
   const keyVal = $('aiApiKey').value.trim();
-  if (keyVal && keyVal !== '________') ai.api_key = keyVal;
+  if (keyVal && keyVal !== SECRET_PLACEHOLDER) ai.api_key = keyVal;
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 30000);
