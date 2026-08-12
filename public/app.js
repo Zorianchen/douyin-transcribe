@@ -2522,6 +2522,7 @@ settingsSave.addEventListener('click', async () => {
     if (!res.ok) throw new Error('保存失败');
     showToast('✓ 设置已保存');
     closeSettings();
+    checkHealth(); // 刷新状态栏（AI/ASR 配置状态）
   } catch (e) {
     showToast('保存失败：' + e.message);
   }
