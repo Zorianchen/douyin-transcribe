@@ -38,7 +38,7 @@ function buildMeta(detail) {
  * @param {string} input 用户粘贴的链接或整段分享文案
  * @returns {Promise<Object>}
  */
-async function transcribeDouyin(input) {
+async function transcribeDouyin(input, apiKey) {
   if (!fs.existsSync(TEMP_DIR)) {
     fs.mkdirSync(TEMP_DIR, { recursive: true });
   }
@@ -87,7 +87,7 @@ async function transcribeDouyin(input) {
   }
 
   try {
-    const { segments: rawSegments } = await transcribe(audioResult.file);
+    const { segments: rawSegments } = await transcribe(audioResult.file, apiKey);
     const segments = await punctuateSegments(rawSegments);
 
     return {
