@@ -933,31 +933,18 @@ async function loadAdminTemplate() {
   }
 }
 
-// 系统拥有者：打开模板编辑弹窗（预填当前模板）
-async function openTemplateEditor() {
-  // 刚登录/注册的会话，首次打开不自动拉取，保持清空状态
-  if (sessionFresh) {
-    sessionFresh = false;
-    showModal('templateModal', 'templateMask');
-    return;
-  }
-  try {
-    const res = await fetch(API_PREFIX + '/api/admin/config-template');
-    if (guard401(res)) return;
-    const tpl = res.ok ? await res.json() : null;
-    const t = tpl || { feishu: {}, ai: {} };
-    $('tplFeishuAppId').value = (t.feishu && t.feishu.app_id) || '';
-    $('tplFeishuAppSecret').value = '';
-    $('tplFeishuUrl').value = (t.feishu && t.feishu.raw_url) || '';
-    $('tplAiEnabled').checked = !!(t.ai && t.ai.enabled);
-    $('tplAiBaseUrl').value = (t.ai && t.ai.base_url) || '';
-    $('tplAiApiKey').value = '';
-    $('tplAiModel').value = (t.ai && t.ai.model) || '';
-    $('tplAiTemp').value = (t.ai && t.ai.temperature != null) ? t.ai.temperature : 0.6;
-    showModal('templateModal', 'templateMask');
-  } catch (e) {
-    showToast('打开模板编辑失败');
-  }
+// 系统拥有者：打开模板编辑弹窗（始终空白，不预填旧密钥）
+function openTemplateEditor() {
+  // 始终以空白默认状态打开，避免暴露服务器残留的旧密钥
+  $('tplFeishuAppId').value = '';
+  $('tplFeishuAppSecret').value = '';
+  $('tplFeishuUrl').value = '';
+  $('tplAiEnabled').checked = false;
+  $('tplAiBaseUrl').value = '';
+  $('tplAiApiKey').value = '';
+  $('tplAiModel').value = '';
+  $('tplAiTemp').value = '0.6';
+  showModal('templateModal', 'templateMask');
 }
 
 // 系统拥有者：保存默认配置模板
