@@ -52,12 +52,16 @@ const DEFAULT_CONFIG = {
     source: '来源',
     created_at: '抓取时间'
   },
-  // AI 模型配置。enabled=false 时用内置 Groq；true 时用自定义 OpenAI 兼容接口
+  // AI 模型配置。统一使用硅基流动（SiliconFlow，OpenAI 兼容接口）。
+  // 该 API Key 同时驱动「AI 智能加工」与「语音识别（ASR）」，在设置页填写一次即可。
+  // 默认不内置密钥：优先用环境变量 SILICONFLOW_API_KEY（写入服务器 .env，不入库），
+  // 否则由用户在「设置 → AI 模型（硅基流动）」中填写并保存（写入本地 data/，不入库）。
   ai: {
-    enabled: false,
-    base_url: 'https://api.openai.com/v1',
-    api_key: '',
-    model: 'gpt-4o-mini',
+    enabled: true,
+    provider: 'siliconflow',
+    base_url: 'https://api.siliconflow.cn/v1',
+    api_key: process.env.SILICONFLOW_API_KEY || '',
+    model: 'Qwen/Qwen2.5-72B-Instruct',
     temperature: 0.6,
     auto_generate: true  // 转写完成后后台自动生成全部 AI 分析模块
   }
