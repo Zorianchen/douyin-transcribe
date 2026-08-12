@@ -257,7 +257,7 @@ async function checkHealth() {
         txt.textContent = '未配置 AI 模型';
       } else {
         dot.className = 'health err';
-        txt.textContent = '密钥未配置';
+        txt.textContent = '未配置语音识别';
       }
     } else {
       dot.className = 'health err';
@@ -925,6 +925,8 @@ async function loadAdminTemplate() {
     if (tpl.feishu && tpl.feishu.configured) parts.push('飞书：已连接（' + escapeHtml(tpl.feishu.table_id) + '）');
     else if (tpl.feishu && tpl.feishu.app_id) parts.push('飞书：已填 App ID（未完全连接）');
     else parts.push('飞书：未配置');
+    if (tpl.siliconflow && tpl.siliconflow.has_key) parts.push('语音识别：已配置（硅基流动）');
+    else parts.push('语音识别：未配置 Key');
     if (tpl.ai && tpl.ai.enabled) parts.push('AI：' + escapeHtml(tpl.ai.model || '自定义模型') + (tpl.ai.has_key ? '' : '（缺 Key）'));
     else parts.push('AI：未启用');
     statusEl.textContent = parts.join('　|　');
@@ -939,6 +941,8 @@ function openTemplateEditor() {
   $('tplFeishuAppId').value = '';
   $('tplFeishuAppSecret').value = '';
   $('tplFeishuUrl').value = '';
+  $('tplSfApiKey').value = '';
+  $('tplSfModel').value = 'FunAudioLLM/SenseVoiceSmall';
   $('tplAiEnabled').checked = false;
   $('tplAiBaseUrl').value = '';
   $('tplAiApiKey').value = '';
@@ -952,18 +956,23 @@ async function saveTemplate() {
   const body = {
     feishu: {
       app_id: $('tplFeishuAppId').value.trim(),
-      app_secret: $('tplFeishuAppSecret').value === '________' ? undefined : $('tplFeishuAppSecret').value.trim(),
+      app_secret: $('tplFeishuAppSecret').value === SECRET_PLACEHOLDER ? undefined : $('tplFeishuAppSecret').value.trim(),
       raw_url: $('tplFeishuUrl').value.trim()
+    },
+    siliconflow: {
+      api_key: $('tplSfApiKey').value === SECRET_PLACEHOLDER ? undefined : $('tplSfApiKey').value.trim(),
+      model: $('tplSfModel').value.trim() || 'FunAudioLLM/SenseVoiceSmall'
     },
     ai: {
       enabled: $('tplAiEnabled').checked,
       base_url: $('tplAiBaseUrl').value.trim(),
-      api_key: $('tplAiApiKey').value === '________' ? undefined : $('tplAiApiKey').value.trim(),
+      api_key: $('tplAiApiKey').value === SECRET_PLACEHOLDER ? undefined : $('tplAiApiKey').value.trim(),
       model: $('tplAiModel').value.trim(),
       temperature: parseFloat($('tplAiTemp').value) || 0.6
     }
   };
   if (!body.feishu.app_secret) delete body.feishu.app_secret;
+  if (!body.siliconflow.api_key) delete body.siliconflow.api_key;
   if (!body.ai.api_key) delete body.ai.api_key;
   try {
     const res = await fetch(API_PREFIX + '/api/admin/config-template', {
@@ -991,11 +1000,13 @@ async function viewUserConfig(id) {
     const cfg = await res.json();
     userConfigTargetId = id;
     const feishu = cfg.feishu || {};
+    const sf = cfg.siliconflow || {};
     const ai = cfg.ai || {};
     const rows = [];
     rows.push(['飞书 App ID', feishu.app_id || '（空）']);
     rows.push(['飞书连接状态', feishu.configured ? '已连接（' + (feishu.table_id || '') + '）' : '未连接']);
     rows.push(['飞书表格', feishu.table_id || '（空）']);
+    rows.push(['语音识别（硅基流动）', sf.has_key ? ('已配置（' + (sf.model || 'SenseVoiceSmall') + '）') : '未配置 Key']);
     rows.push(['AI 模型', ai.enabled ? (ai.model || '自定义') : '未启用']);
     rows.push(['AI API 地址', ai.base_url || '（默认）']);
     rows.push(['AI API Key', ai.has_key ? '已配置' : '（空）']);
@@ -2187,6 +2198,7 @@ function switchSettingsTab(tab) {
 // 绑定密钥清除按钮
 bindClearKeyBtn('clearFeishuSecret', 'feishuAppSecret');
 bindClearKeyBtn('clearAiKey', 'aiApiKey');
+bindClearKeyBtn('clearSfKey', 'sfApiKey');
 
 // 清空设置弹窗所有表单字段（注册/登录/切换用户时调用）
 let sessionFresh = false; // 标记本次会话是否刚登录/注册（模板编辑器首次打开不自动拉取）
@@ -2200,6 +2212,11 @@ function clearSettingsForm() {
   $('feishuUrl').value = '';
   const fs = $('feishuStatus');
   if (fs) { fs.textContent = ''; fs.className = 'form-status'; }
+  // 语音识别（硅基流动，配置项，清空）
+  $('sfApiKey').value = '';
+  const cSf = $('clearSfKey');
+  if (cSf) cSf.classList.add('hidden');
+  $('sfModel').value = 'FunAudioLLM/SenseVoiceSmall';
   // AI 模型（配置项，清空）
   $('aiEnabled').checked = false;
   $('aiBaseUrl').value = '';
@@ -2294,6 +2311,15 @@ async function loadSettingsIntoForm() {
     if (cfg.feishu.configured) {
       $('feishuStatus').textContent = '✓ 已连接：' + cfg.feishu.table_id;
       $('feishuStatus').className = 'form-status ok';
+    }
+    // 语音识别（硅基流动）：独立模块，与 AI 模型互不干扰
+    $('sfModel').value = (cfg.siliconflow && cfg.siliconflow.model) || 'FunAudioLLM/SenseVoiceSmall';
+    if (cfg.siliconflow && cfg.siliconflow.has_key) {
+      $('sfApiKey').value = SECRET_PLACEHOLDER;
+      $('clearSfKey').classList.remove('hidden');
+    } else {
+      $('sfApiKey').value = '';
+      $('clearSfKey').classList.add('hidden');
     }
     $('aiEnabled').checked = !!cfg.ai.enabled;
     $('aiBaseUrl').value = cfg.ai.base_url || '';
@@ -2499,6 +2525,10 @@ settingsSave.addEventListener('click', async () => {
       app_secret: handleSecretField('feishuAppSecret'),
       raw_url: $('feishuUrl').value.trim()
     },
+    siliconflow: {
+      api_key: handleSecretField('sfApiKey'),
+      model: $('sfModel').value.trim() || 'FunAudioLLM/SenseVoiceSmall'
+    },
     ai: {
       enabled: $('aiEnabled').checked,
       base_url: $('aiBaseUrl').value.trim(),
@@ -2511,6 +2541,7 @@ settingsSave.addEventListener('click', async () => {
   };
   // undefined 字段不发送（后端 deepMerge 不会覆盖）
   if (body.feishu.app_secret === undefined) delete body.feishu.app_secret;
+  if (body.siliconflow.api_key === undefined) delete body.siliconflow.api_key;
   if (body.ai.api_key === undefined) delete body.ai.api_key;
 
   try {
