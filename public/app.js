@@ -2184,6 +2184,10 @@ function switchSettingsTab(tab) {
   document.querySelectorAll('.tab-pane').forEach((p) => p.classList.toggle('active', p.dataset.pane === tab));
 }
 
+// 绑定密钥清除按钮
+bindClearKeyBtn('clearFeishuSecret', 'feishuAppSecret');
+bindClearKeyBtn('clearAiKey', 'aiApiKey');
+
 // 清空设置弹窗所有表单字段（注册/登录/切换用户时调用）
 let sessionFresh = false; // 标记本次会话是否刚登录/注册（模板编辑器首次打开不自动拉取）
 function clearSettingsForm() {
@@ -2191,6 +2195,8 @@ function clearSettingsForm() {
   // 飞书多维表格（配置项，清空）
   $('feishuAppId').value = '';
   $('feishuAppSecret').value = '';
+  const cFs = $('clearFeishuSecret');
+  if (cFs) cFs.classList.add('hidden');
   $('feishuUrl').value = '';
   const fs = $('feishuStatus');
   if (fs) { fs.textContent = ''; fs.className = 'form-status'; }
@@ -2198,6 +2204,8 @@ function clearSettingsForm() {
   $('aiEnabled').checked = false;
   $('aiBaseUrl').value = '';
   $('aiApiKey').value = '';
+  const cAk = $('clearAiKey');
+  if (cAk) cAk.classList.add('hidden');
   $('aiModel').value = '';
   $('aiTemp').value = '0.6';
   $('aiAutoGen').checked = true;
@@ -2268,12 +2276,20 @@ async function loadFieldMapOnly() {
 }
 
 // 加载配置到表单
+const SECRET_PLACEHOLDER = '••••••••';
 async function loadSettingsIntoForm() {
   try {
     const res = await fetch(API_PREFIX + '/api/config');
     const cfg = await res.json();
     $('feishuAppId').value = cfg.feishu.app_id || '';
-    $('feishuAppSecret').value = '';
+    // 飞书密钥：已存储则显示占位符，否则空
+    if (cfg.feishu.has_secret) {
+      $('feishuAppSecret').value = SECRET_PLACEHOLDER;
+      $('clearFeishuSecret').classList.remove('hidden');
+    } else {
+      $('feishuAppSecret').value = '';
+      $('clearFeishuSecret').classList.add('hidden');
+    }
     $('feishuUrl').value = cfg.feishu.raw_url || '';
     if (cfg.feishu.configured) {
       $('feishuStatus').textContent = '✓ 已连接：' + cfg.feishu.table_id;
@@ -2281,7 +2297,14 @@ async function loadSettingsIntoForm() {
     }
     $('aiEnabled').checked = !!cfg.ai.enabled;
     $('aiBaseUrl').value = cfg.ai.base_url || '';
-    $('aiApiKey').value = '';
+    // AI 密钥：已存储则显示占位符，否则空
+    if (cfg.ai.has_key) {
+      $('aiApiKey').value = SECRET_PLACEHOLDER;
+      $('clearAiKey').classList.remove('hidden');
+    } else {
+      $('aiApiKey').value = '';
+      $('clearAiKey').classList.add('hidden');
+    }
     $('aiModel').value = cfg.ai.model || '';
     $('aiTemp').value = cfg.ai.temperature != null ? cfg.ai.temperature : 0.6;
     $('aiAutoGen').checked = cfg.ai.auto_generate !== false;
@@ -2440,6 +2463,26 @@ async function savePassword() {
   }
 }
 
+// 密钥字段处理：占位符→undefined(不修改)；空字符串→null(显式删除)；有值→原值
+function handleSecretField(inputId) {
+  const el = $(inputId);
+  if (!el) return undefined;
+  const v = el.value.trim();
+  if (v === SECRET_PLACEHOLDER) return undefined; // 占位符 = 不修改
+  if (v === '') return null;                     // 空值 = 显式清除
+  return v;                                      // 新值 = 更新
+}
+
+// 清除密钥按钮事件
+function bindClearKeyBtn(btnId, inputId) {
+  const btn = $(btnId);
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    $(inputId).value = '';
+    btn.classList.add('hidden');
+  });
+}
+
 // 保存设置
 settingsSave.addEventListener('click', async () => {
   // 如果当前在「个人资料」Tab，先保存资料
@@ -2452,23 +2495,23 @@ settingsSave.addEventListener('click', async () => {
   const body = {
     feishu: {
       app_id: $('feishuAppId').value.trim(),
-      // 密码框是占位符则不覆盖
-      app_secret: $('feishuAppSecret').value === '________' ? undefined : $('feishuAppSecret').value.trim(),
+      // 占位符 → 不修改；空字符串 + 清除标记 → 显式删除；有值 → 更新
+      app_secret: handleSecretField('feishuAppSecret'),
       raw_url: $('feishuUrl').value.trim()
     },
     ai: {
       enabled: $('aiEnabled').checked,
       base_url: $('aiBaseUrl').value.trim(),
-      api_key: $('aiApiKey').value === '________' ? undefined : $('aiApiKey').value.trim(),
+      api_key: handleSecretField('aiApiKey'),
       model: $('aiModel').value.trim(),
       temperature: parseFloat($('aiTemp').value) || 0.6,
       auto_generate: $('aiAutoGen').checked
     },
     field_map: fieldMapSnapshot
   };
-  // 清掉 undefined（避免覆盖）
-  if (!body.feishu.app_secret) delete body.feishu.app_secret;
-  if (!body.ai.api_key) delete body.ai.api_key;
+  // undefined 字段不发送（后端 deepMerge 不会覆盖）
+  if (body.feishu.app_secret === undefined) delete body.feishu.app_secret;
+  if (body.ai.api_key === undefined) delete body.ai.api_key;
 
   try {
     const res = await fetch(API_PREFIX + '/api/config', {
