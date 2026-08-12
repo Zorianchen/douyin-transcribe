@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#fe2c55" />
   <title>抖音文字稿工作台</title>
-  <link rel="stylesheet" href="style.css?v=20260812t" />
+  <link rel="stylesheet" href="style.css?v=20260812v" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>" />
 </head>
 <body>
@@ -206,7 +206,8 @@
     </div>
     <div class="modal-tabs">
       <button class="modal-tab active" data-tab="feishu" type="button">飞书多维表格</button>
-      <button class="modal-tab" data-tab="ai" type="button">AI 模型（硅基流动）</button>
+      <button class="modal-tab" data-tab="asr" type="button">语音识别（硅基流动）</button>
+      <button class="modal-tab" data-tab="ai" type="button">AI 模型</button>
       <button class="modal-tab" data-tab="profile" type="button">个人资料</button>
       <button class="modal-tab" data-tab="fields" type="button">字段映射</button>
     </div>
@@ -230,19 +231,33 @@
         <div id="feishuFields" class="field-list hidden"></div>
         <button class="btn btn-primary btn-sm" id="feishuSyncBtn" type="button">🧩 同步字段（自动创建缺失列）</button>
       </div>
-      <!-- AI 配置（硅基流动） -->
+      <!-- 语音识别（硅基流动）：专用于抖音转文字，与 AI 模型相互独立 -->
+      <div class="tab-pane" data-pane="asr">
+        <div class="pane-desc">硅基流动（SiliconFlow）专门用于「抖音链接转文字」的语音识别，与下方 AI 模型配置<strong>相互独立</strong>。在此填写一次即可用于转写，不影响智能加工。</div>
+        <label class="form-label">硅基流动 API Key</label>
+        <div class="form-input-row">
+          <input type="password" id="sfApiKey" class="form-input" placeholder="sk-...（留空不修改）" autocomplete="new-password" />
+          <button type="button" id="clearSfKey" class="btn-clear-key hidden" title="清除密钥">✕</button>
+        </div>
+        <div class="form-hint">在 <a href="https://siliconflow.cn" target="_blank" rel="noreferrer">siliconflow.cn</a> 免费获取，仅用于语音识别。也可在服务器 .env 配置 SILICONFLOW_API_KEY 作为兜底。</div>
+        <label class="form-label">识别模型</label>
+        <input type="text" id="sfModel" class="form-input" value="FunAudioLLM/SenseVoiceSmall" />
+        <div class="form-hint">当前使用 SenseVoiceSmall，免费且自带中文标点，一般无需修改。</div>
+      </div>
+      <!-- AI 模型：用于智能加工，独立于语音识别 -->
       <div class="tab-pane" data-pane="ai">
+        <div class="pane-desc">AI 模型用于「智能加工」（金句 / 结构 / 小红书 / 公众号 / 痛点 / 选题等），与上方语音识别<strong>相互独立</strong>，可填相同或不同的服务商。</div>
         <label class="form-check">
-          <input type="checkbox" id="aiEnabled" checked /> <span>启用 AI 智能加工（使用硅基流动）</span>
+          <input type="checkbox" id="aiEnabled" checked /> <span>启用 AI 智能加工</span>
         </label>
         <label class="form-label">API 地址（OpenAI 兼容）</label>
         <input type="text" id="aiBaseUrl" class="form-input" placeholder="https://api.siliconflow.cn/v1" />
-        <label class="form-label">硅基流动 API Key</label>
+        <label class="form-label">API Key</label>
         <div class="form-input-row">
           <input type="password" id="aiApiKey" class="form-input" placeholder="sk-...（留空不修改）" autocomplete="new-password" />
           <button type="button" id="clearAiKey" class="btn-clear-key hidden" title="清除密钥">✕</button>
         </div>
-        <div class="form-hint">该 API Key 同时用于「语音识别（ASR）」与「AI 智能加工」，在 <a href="https://siliconflow.cn" target="_blank" rel="noreferrer">siliconflow.cn</a> 免费获取。</div>
+        <div class="form-hint">可填任意 OpenAI 兼容接口（硅基流动 LLM / OpenAI / DeepSeek / 通义等）。此 Key 仅用于 AI 加工，与语音识别 Key 独立。</div>
         <label class="form-label">模型名称</label>
         <input type="text" id="aiModel" class="form-input" placeholder="Qwen/Qwen2.5-72B-Instruct / deepseek-ai/DeepSeek-V3" />
         <label class="form-label">温度（0-1）</label>
@@ -333,12 +348,17 @@
       <input type="password" id="tplFeishuAppSecret" class="form-input" placeholder="应用密钥（留空则不修改）" autocomplete="new-password" />
       <label class="form-label">多维表格链接</label>
       <input type="text" id="tplFeishuUrl" class="form-input" placeholder="https://xxx.feishu.cn/wiki/...?table=tbl...&view=vew..." />
+      <div class="pane-desc">语音识别（硅基流动）· 此 Key 专用于抖音语音识别，独立于下方 AI 模型</div>
+      <label class="form-label">硅基流动 API Key</label>
+      <input type="password" id="tplSfApiKey" class="form-input" placeholder="sk-...（留空则不修改）" autocomplete="new-password" />
+      <label class="form-label">识别模型</label>
+      <input type="text" id="tplSfModel" class="form-input" placeholder="FunAudioLLM/SenseVoiceSmall" />
       <label class="form-check">
-        <input type="checkbox" id="tplAiEnabled" checked /> <span>启用 AI 智能加工（使用硅基流动）</span>
+        <input type="checkbox" id="tplAiEnabled" checked /> <span>启用 AI 智能加工</span>
       </label>
       <label class="form-label">AI API 地址（OpenAI 兼容）</label>
       <input type="text" id="tplAiBaseUrl" class="form-input" placeholder="https://api.siliconflow.cn/v1" />
-      <label class="form-label">硅基流动 API Key</label>
+      <label class="form-label">AI API Key</label>
       <input type="password" id="tplAiApiKey" class="form-input" placeholder="sk-...（留空则不修改）" autocomplete="new-password" />
       <label class="form-label">模型名称</label>
       <input type="text" id="tplAiModel" class="form-input" placeholder="Qwen/Qwen2.5-72B-Instruct / deepseek-ai/DeepSeek-V3" />
@@ -414,6 +434,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20260812t"></script>
+  <script src="app.js?v=20260812w"></script>
 </body>
 </html>
