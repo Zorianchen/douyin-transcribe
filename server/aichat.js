@@ -1,6 +1,6 @@
 'use strict';
 
-// 统一 AI 对话：优先用用户自定义模型（OpenAI 兼容接口），否则回退到内置 Groq
+// 统一 AI 对话：用户配置的硅基流动（SiliconFlow，OpenAI 兼容接口）
 // 供智能加工（金句/结构/小红书/公众号/痛点/选题）调用
 
 const https = require('https');
@@ -8,7 +8,6 @@ const http = require('http');
 const { URL } = require('url');
 const { getProxyAgent } = require('./proxy');
 const configStore = require('./configStore');
-const { chat: groqChat } = require('./groq');
 
 /**
  * 通用对话补全
@@ -18,12 +17,12 @@ const { chat: groqChat } = require('./groq');
  * @returns {Promise<string>}
  */
 async function chat(system, user, opts = {}, ai = null) {
-  // 不传 ai 时使用默认配置（默认未启用自定义模型 → 回退内置 Groq）
+  // 不传 ai 时使用默认配置（默认已配置硅基流动）
   const cfgAi = ai || configStore.defaultConfig().ai;
 
-  // 未开启自定义：走内置 Groq
+  // 未启用或配置不完整 → 明确报错，不再回退 Groq
   if (!cfgAi.enabled || !cfgAi.api_key || !cfgAi.base_url || !cfgAi.model) {
-    return groqChat(system, user, opts);
+    throw new Error('未配置 AI 模型：请在「设置 → AI 模型（硅基流动）」中填写硅基流动 API Key 并保存');
   }
 
   return chatCustom(cfgAi, system, user, opts);
@@ -99,11 +98,11 @@ async function chatCustom(ai, system, user, opts) {
 async function testCustom(ai = null) {
   const cfgAi = ai || configStore.defaultConfig().ai;
   if (!cfgAi.enabled || !cfgAi.api_key || !cfgAi.base_url || !cfgAi.model) {
-    return { ok: false, message: '未启用自定义模型或配置不完整' };
+    return { ok: false, message: '未启用 AI 模型或配置不完整（请先填写硅基流动 API Key）' };
   }
   try {
     const reply = await chatCustom(
-      ai,
+      cfgAi,
       '你是一个测试助手，只回复"OK"两个字母。',
       '请回复OK',
       { temperature: 0, timeout: 20000 }
