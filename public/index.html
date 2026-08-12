@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#fe2c55" />
   <title>抖音文字稿工作台</title>
-  <link rel="stylesheet" href="style.css?v=20260812q" />
+  <link rel="stylesheet" href="style.css?v=20260812r" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>" />
 </head>
 <body>
@@ -216,7 +216,10 @@
         <label class="form-label">App ID</label>
         <input type="text" id="feishuAppId" class="form-input" placeholder="cli_xxxxxxxx" autocomplete="off" />
         <label class="form-label">App Secret</label>
-        <input type="password" id="feishuAppSecret" class="form-input" placeholder="应用密钥" autocomplete="new-password" />
+        <div class="form-input-row">
+          <input type="password" id="feishuAppSecret" class="form-input" placeholder="应用密钥（留空不修改）" autocomplete="new-password" />
+          <button type="button" id="clearFeishuSecret" class="btn-clear-key hidden" title="清除密钥">✕</button>
+        </div>
         <label class="form-label">多维表格链接</label>
         <input type="text" id="feishuUrl" class="form-input" placeholder="https://xxx.feishu.cn/wiki/...?table=tbl...&view=vew..." />
         <div class="form-hint">支持 /base/ 和 /wiki/ 链接，自动解析 app_token、table、view</div>
@@ -235,7 +238,10 @@
         <label class="form-label">API 地址（OpenAI 兼容）</label>
         <input type="text" id="aiBaseUrl" class="form-input" placeholder="https://api.openai.com/v1" />
         <label class="form-label">API Key</label>
-        <input type="password" id="aiApiKey" class="form-input" placeholder="sk-..." autocomplete="new-password" />
+        <div class="form-input-row">
+          <input type="password" id="aiApiKey" class="form-input" placeholder="sk-...（留空不修改）" autocomplete="new-password" />
+          <button type="button" id="clearAiKey" class="btn-clear-key hidden" title="清除密钥">✕</button>
+        </div>
         <label class="form-label">模型名称</label>
         <input type="text" id="aiModel" class="form-input" placeholder="gpt-4o-mini / deepseek-chat / qwen-plus" />
         <label class="form-label">温度（0-1）</label>
@@ -407,6 +413,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20260812q"></script>
+  <script src="app.js?v=20260812r"></script>
 </body>
 </html>
