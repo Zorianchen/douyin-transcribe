@@ -22,13 +22,12 @@ const profiles = require('./profiles');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 检查当前 ASR provider 的密钥是否已配置
+// 检查当前 ASR provider 的密钥是否已配置（环境变量层面；用户配置层在路由内单独判断）
 function hasAsrKey() {
-  if (asr.provider === 'groq') return !!process.env.GROQ_API_KEY;
   if (asr.provider === 'tencent') {
     return !!(process.env.TENCENT_APP_ID && process.env.TENCENT_SECRET_ID && process.env.TENCENT_SECRET_KEY);
   }
-  // siliconflow
+  // siliconflow（默认）：用户设置中的硅基流动 Key 或环境变量均可
   return !!process.env.SILICONFLOW_API_KEY;
 }
 
@@ -60,10 +59,12 @@ app.get('/api/health', (req, res) => {
   const cfg = configStore.get(systemOwner ? systemOwner.id : 'system');
   const ai = (cfg && cfg.ai) || {};
   const hasAiConfig = !!(ai.enabled && ai.base_url && ai.api_key && ai.model);
+  // ASR 密钥：环境变量或用户配置中的硅基流动 Key 任一即可
+  const hasAsrKeyNow = hasAsrKey() || !!(ai && ai.api_key);
   res.json({
     ok: true,
     asr_provider: asr.provider,
-    has_asr_key: hasAsrKey(),
+    has_asr_key: hasAsrKeyNow,
     has_ai_config: hasAiConfig
   });
 });
@@ -289,11 +290,12 @@ app.post('/api/admin/users/:id/config/reset', auth.requireSystemOwner, (req, res
 
 // 核心接口：提取文字稿
 app.post('/api/transcribe', auth.requireAuth, async (req, res) => {
-  if (!hasAsrKey()) {
+  // 硅基流动 Key：优先用当前用户设置里填的（与 AI 加工共用），否则回退环境变量
+  const siliconflowKey = configStore.get(req.userId).ai.api_key || process.env.SILICONFLOW_API_KEY;
+  if (!siliconflowKey) {
     let hint;
-    if (asr.provider === 'groq') hint = '请在 .env 中配置 GROQ_API_KEY。';
-    else if (asr.provider === 'tencent') hint = '请在 .env 中配置 TENCENT_APP_ID、TENCENT_SECRET_ID、TENCENT_SECRET_KEY。';
-    else hint = '请在 .env 中配置 SILICONFLOW_API_KEY（在 siliconflow.cn 免费注册获取）。';
+    if (asr.provider === 'tencent') hint = '请在 .env 中配置 TENCENT_APP_ID、TENCENT_SECRET_ID、TENCENT_SECRET_KEY。';
+    else hint = '请在「设置 → AI 模型（硅基流动）」中填写硅基流动 API Key 并保存。';
     return res.status(500).json({
       error: {
         code: CODES.NO_API_KEY,
@@ -315,7 +317,7 @@ app.post('/api/transcribe', auth.requireAuth, async (req, res) => {
   }
 
   try {
-    const result = await transcribeDouyin(url.trim());
+    const result = await transcribeDouyin(url.trim(), siliconflowKey);
     // 保存到历史记录（不影响主流程，出错不返回给前端）
     try {
       history.add(result, req.userId);
