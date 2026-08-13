@@ -773,59 +773,58 @@ body {
 
 /* ===== 移动端 ===== */
 @media (max-width: 768px) {
-  /* 侧边栏 → 顶部应用栏（logo + 用户 + 设置状态），不再占满全屏 */
+  /* ===== 移动端：顶部应用栏（logo + 用户 + 健康 + 设置） ===== */
   .sidebar {
     position: fixed; top: 0; left: 0; right: 0;
-    width: 100%; height: auto; bottom: auto;
+    width: 100%; height: 54px; box-sizing: border-box;
     flex-direction: row; align-items: center; gap: 10px;
-    padding: 8px 12px;
+    padding: 0 12px;
     border-right: none; border-bottom: 1px solid var(--border);
     background: #fff; z-index: 60;
   }
   .sidebar-logo {
     display: flex; align-items: center; gap: 8px;
-    padding: 0; border-bottom: none; font-size: 14px;
-    flex: 1; min-width: 0;
+    padding: 0; border-bottom: none; flex: 1; min-width: 0;
   }
-  .logo-text { display: inline; font-size: 13px; }
+  .logo-text { display: inline; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .logo-emoji { font-size: 20px; flex-shrink: 0; }
   /* 用户区：顶部栏右侧 */
   .sidebar-user {
     display: flex; align-items: center; gap: 6px;
-    padding: 0; border-bottom: none; font-size: 12px; flex-shrink: 0;
+    padding: 0; border-bottom: none; flex-shrink: 0;
   }
-  .user-avatar { width: 26px; height: 26px; font-size: 12px; }
+  .user-avatar { width: 28px; height: 28px; font-size: 12px; }
   .user-name { display: none; }
-  .user-logout { font-size: 11px; padding: 3px 8px; }
-  /* 导航 → 固定底部标签栏 */
+  .user-logout { font-size: 11px; padding: 3px 8px; margin-left: 2px; }
+  /* 健康 + 设置：置于顶部栏右侧（设置始终可见） */
+  .sidebar-footer {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0; border-top: none; flex-shrink: 0; background: transparent;
+  }
+  .health { font-size: 9px; }
+  .settings-btn { font-size: 18px; padding: 6px 8px; margin-left: 0; }
+  .sidebar-toggle { display: none; }
+
+  /* ===== 移动端：底部导航标签栏（导航在底部） ===== */
   .nav {
     position: fixed; left: 0; right: 0; bottom: 0;
     flex-direction: row; justify-content: space-around; align-items: stretch;
-    padding: 6px 0; gap: 0; flex: none;
+    padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); gap: 0; flex: none;
     background: #fff; border-top: 1px solid var(--border);
-    z-index: 60;
+    z-index: 60; box-sizing: border-box;
   }
   .nav-item {
-    flex-direction: column; gap: 2px; padding: 6px 4px; font-size: 10px;
+    flex-direction: column; gap: 2px; padding: 6px 2px; font-size: 10px;
     text-align: center; border-radius: 0; border-bottom: none; flex: 1;
+    color: var(--text-secondary);
   }
   .nav-item.active {
-    background: none; color: var(--primary); box-shadow: none;
-    border-bottom-color: transparent; font-weight: 600;
+    background: none; color: var(--primary); box-shadow: none; font-weight: 600;
   }
   .nav-icon { font-size: 20px; }
-  /* 状态 + 设置：置于顶部栏右侧 */
-  .sidebar-footer {
-    display: flex; align-items: center; gap: 8px;
-    padding: 0; border-top: none; font-size: 11px; flex-shrink: 0;
-    background: transparent;
-  }
-  .health { font-size: 9px; }
-  .settings-btn { font-size: 16px; padding: 4px 8px; margin-left: 0; }
-  .sidebar-toggle { display: none; }
 
-  /* 主内容区：让出顶部栏与底部标签栏的空间 */
-  .content { margin-left: 0; margin-top: 0; padding: 56px 12px 84px; max-width: 100%; }
+  /* 主内容区：让出顶部栏(54px)与底部标签栏(≈62px)的空间 */
+  .content { margin-left: 0; margin-top: 0; padding: 66px 12px 90px; max-width: 100%; }
   .page-hero h1 { font-size: 20px; }
   .page-hero p { font-size: 13px; }
   .card { padding: 14px; border-radius: 10px; }
