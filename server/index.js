@@ -56,9 +56,11 @@ app.use((req, res, next) => {
 // 静态前端
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-// 健康检查
-app.get('/api/health', (req, res) => {
-  const cfg = configStore.get(systemOwner ? systemOwner.id : 'system');
+// 健康检查（可选登录：已登录则读当前用户配置，否则读系统拥有者）
+app.get('/api/health', auth.attachUser, (req, res) => {
+  // 优先用当前登录用户的配置，未登录则 fallback 到系统拥有者
+  const uid = req.userId || (systemOwner ? systemOwner.id : 'system');
+  const cfg = configStore.get(uid);
   const ai = (cfg && cfg.ai) || {};
   const hasAiConfig = !!(ai.enabled && ai.base_url && ai.api_key && ai.model);
   // ASR 密钥：环境变量优先，否则用代码内置（硬编码）的硅基流动 Key；与设置页输入无关
