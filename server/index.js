@@ -491,13 +491,13 @@ app.get('/api/batch/:id', auth.requireAuth, (req, res) => {
 });
 
 // ============ 配置：飞书 + 语音识别（硅基流动）+ AI 模型（按用户隔离） ============
-// 获取当前用户的配置（脱敏，不返回 app_secret/api_key 明文）
+// 获取当前用户的配置（返回密钥明文供表单回填；用户可通过眼睛图标切换显示）
 app.get('/api/config', auth.requireAuth, (req, res) => {
   const cfg = configStore.get(req.userId);
   res.json({
     feishu: {
       app_id: cfg.feishu.app_id,
-      has_secret: !!cfg.feishu.app_secret,
+      app_secret: cfg.feishu.app_secret || '',
       app_token: cfg.feishu.app_token,
       table_id: cfg.feishu.table_id,
       view_id: cfg.feishu.view_id,
@@ -507,14 +507,13 @@ app.get('/api/config', auth.requireAuth, (req, res) => {
     },
     field_map: cfg.field_map,
     siliconflow: {
-      model: cfg.siliconflow.model,
-      has_key: !!cfg.siliconflow.api_key
+      model: cfg.siliconflow.model
     },
     ai: {
       enabled: cfg.ai.enabled,
       base_url: cfg.ai.base_url,
+      api_key: cfg.ai.api_key || '',
       model: cfg.ai.model,
-      has_key: !!cfg.ai.api_key,
       temperature: cfg.ai.temperature,
       auto_generate: cfg.ai.auto_generate !== false
     },
