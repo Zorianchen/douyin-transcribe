@@ -242,31 +242,41 @@ function setupAuthUI() {
 }
 
 // ========== 健康检查 ==========
-async function checkHealth() {
+let lastHealthState = ''; // 记录上次状态，用于检测变化并触发高亮
+
+async function checkHealth(opts) {
+  // opts: { silent: true } 静默模式（定时轮询时不闪）
   const dot = $('healthDot');
   const txt = $('healthText');
+  const bar = dot ? dot.closest('.sidebar-footer') || dot.parentElement : null;
   try {
     const res = await fetch(API_PREFIX + '/api/health');
     const data = await res.json();
+    let state, label;
     if (data.ok) {
-      // 服务正常 = ASR 已配置 + AI 模型已填写
       if (data.has_asr_key && data.has_ai_config) {
-        dot.className = 'health ok';
-        txt.textContent = '服务正常';
+        state = 'ok'; label = '✓ 服务正常';
       } else if (!data.has_ai_config) {
-        dot.className = 'health idle';
-        txt.textContent = '未配置 AI 模型';
+        state = 'idle'; label = '未配置 AI 模型';
       } else {
-        dot.className = 'health err';
-        txt.textContent = '未配置语音识别';
+        state = 'err'; label = '未配置语音识别';
       }
     } else {
-      dot.className = 'health err';
-      txt.textContent = '服务异常';
+      state = 'err'; label = '服务异常';
+    }
+    // 状态变化或主动触发时，加高亮动画
+    const changed = (state !== lastHealthState);
+    lastHealthState = state;
+    if (dot) dot.className = 'health ' + state;
+    if (txt) txt.textContent = label;
+    if (changed && !opts?.silent && bar) {
+      bar.classList.add('health-flash');
+      setTimeout(() => bar.classList.remove('health-flash'), 900);
     }
   } catch (e) {
-    dot.className = 'health err';
-    txt.textContent = '未连接';
+    lastHealthState = 'err';
+    if (dot) dot.className = 'health err';
+    if (txt) txt.textContent = '未连接';
   }
 }
 
@@ -2522,7 +2532,8 @@ settingsSave.addEventListener('click', async () => {
     if (!res.ok) throw new Error('保存失败');
     showToast('✓ 设置已保存');
     closeSettings();
-    checkHealth(); // 刷新状态栏（AI/ASR 配置状态）
+    // 立即刷新状态栏（非静默 → 状态变化会触发高亮动画）
+    await checkHealth();
   } catch (e) {
     showToast('保存失败：' + e.message);
   }
@@ -2546,6 +2557,7 @@ $('feishuConnectBtn').addEventListener('click', async () => {
     status.textContent = '✓ 连接成功，表格共 ' + data.fields.length + ' 个字段';
     status.className = 'form-status ok';
     renderFeishuFields(data.fields);
+    checkHealth(); // 刷新状态栏
   } catch (e) {
     status.textContent = '✗ ' + (e.message || '连接失败');
     status.className = 'form-status err';
@@ -2613,6 +2625,8 @@ $('aiTestBtn').addEventListener('click', async () => {
     if (data.ok) {
       status.textContent = '✓ ' + (data.message || '连接成功');
       status.className = 'form-status ok';
+      // 测试通过 → 刷新状态栏反映最新 AI 配置状态
+      checkHealth();
     } else {
       status.textContent = '✗ ' + (data.message || '连接失败');
       status.className = 'form-status err';
@@ -2641,7 +2655,7 @@ function startApp() {
   } else {
     checkHealth();
   }
-  setInterval(checkHealth, 60000);
+  setInterval(() => checkHealth({ silent: true }), 60000);
   applyHashRoute();
   if (location.hash !== '#library') singleInput.focus();
 
