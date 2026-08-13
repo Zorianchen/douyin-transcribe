@@ -76,6 +76,16 @@ body {
 .health.ok { color: var(--success); }
 .health.err { color: var(--error); }
 .health.idle { color: #999; }
+
+/* 状态栏变化时的高亮闪烁（保存/测试连接后触发） */
+.health-flash {
+  animation: healthPulse 0.9s ease-out;
+}
+@keyframes healthPulse {
+  0%   { background: rgba(16,185,129,0.15); }
+  50%  { background: rgba(16,185,129,0.08); }
+  100% { background: transparent; }
+}
 .settings-btn {
   margin-left: auto;
   background: none; border: none; font-size: 16px; cursor: pointer;
