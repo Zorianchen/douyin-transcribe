@@ -669,6 +669,8 @@ body {
 }
 .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(254,44,85,.08); }
 .form-hint { font-size: 12px; color: var(--text-secondary); margin: 6px 0; line-height: 1.6; }
+.pane-desc { font-size: 13px; color: var(--text-secondary); background: rgba(254,44,85,.06); border: 1px solid rgba(254,44,85,.15); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; line-height: 1.6; }
+.pane-desc strong { color: var(--primary); }
 .form-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
 .form-status { font-size: 13px; color: var(--text-secondary); }
 .form-status.ok { color: var(--success); }
@@ -686,22 +688,28 @@ body {
 .form-input-row .form-input {
   flex: 1;
 }
-.btn-clear-key {
+.btn-toggle-pw {
   flex-shrink: 0;
   width: 30px; height: 30px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: #fff;
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: all .15s;
+  user-select: none;
 }
-.btn-clear-key:hover {
-  background: var(--error-bg, #fef2f2);
-  border-color: var(--error, #ef4444);
-  color: var(--error, #ef4444);
+.btn-toggle-pw:hover {
+  background: var(--bg-hover, #f3f4f6);
+  border-color: var(--primary, #e11d48);
+  color: var(--primary, #e11d48);
+}
+.btn-toggle-pw.active {
+  background: var(--primary-bg, #fef2f2);
+  border-color: var(--primary, #e11d48);
+  color: var(--primary, #e11d48);
 }
 
 /* 字段映射 */
