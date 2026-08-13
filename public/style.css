@@ -917,46 +917,72 @@ body {
   .auth-title { font-size: 20px; }
   .auth-input { padding: 12px 14px; font-size: 15px; }
 
-  /* 用户列表：卡片式（移动端隐藏表头） */
-  .admin-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .admin-table { min-width: 500px; }
-  /* 移动端隐藏桌面表格表头，每行渲染为卡片 */
+  /* ===== 移动端：用户管理页（iPhone 13 / 390px 紧凑适配） ===== */
+  .view-admin .page-hero { margin-bottom: 12px; }
+  .view-admin .page-hero h1 { font-size: 18px; }
+  .view-admin .page-hero p { display: none; } /* 手机隐藏副标题省空间 */
+  .view-admin #createUserBtn { width: auto !important; height: 36px !important; min-height: 36px !important; max-height: 36px !important; font-size: 13px !important; padding: 8px 16px !important; }
+
+  /* 默认配置模板 */
+  .admin-template-card {
+    border-radius: var(--radius-sm); padding: 10px 12px;
+    background: #fff; border: 1px solid var(--border); margin-bottom: 8px;
+  }
+  .admin-template-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+  .admin-template-title { font-size: 12px; font-weight: 600; }
+  .admin-template-desc { font-size: 11px; color: var(--text-secondary); margin-bottom: 5px; line-height: 1.4; }
+  .admin-template-status { font-size: 11px; padding: 4px 8px; background: var(--primary-light); border-radius: 5px; display: inline-block; }
+  .admin-count { font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; }
+
+  /* 用户卡片列表 */
+  .admin-table-wrap { overflow-x: visible; }
+  .admin-table { min-width: 0; width: 100%; border-collapse: separate; border-spacing: 0; }
   .admin-table thead { display: none; }
   .admin-table tbody tr {
     display: block;
-    position: relative;
-    padding: 12px 14px;
-    margin-bottom: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
     background: #fff;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    box-shadow: var(--shadow);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
   .admin-table tbody td {
     display: flex;
     align-items: center;
-    padding: 3px 0;
-    font-size: 13px;
+    padding: 2px 0;
+    font-size: 12.5px;
     border: none !important;
+    line-height: 1.4;
   }
   .admin-table tbody td::before {
-    content: attr(data-label);
     display: inline-block;
-    width: 68px;
     font-size: 11px;
     color: var(--text-secondary);
     flex-shrink: 0;
+    margin-right: 4px;
   }
-  /* 按列位置自动填标签（JS 渲染时会写 data-label） */
-  .admin-table tbody td:nth-child(1)::before { content: '用户名'; width: 68px; }
-  .admin-table tbody td:nth-child(2)::before { content: '昵称'; width: 50px; }
-  .admin-table tbody td:nth-child(3)::before { content: '邮箱'; width: 50px; }
-  .admin-table tbody td:nth-child(4)::before { content: '注册时间'; width: 72px; }
-  .admin-table tbody td:nth-child(5)::before { content: '角色'; width: 40px; }
-  .admin-table tbody td:nth-child(6)::before { content: ''; width: 0; } /* 操作列无标签 */
-  .admin-table tbody td:nth-child(1) { font-weight: 600; font-size: 14px; }
-  .admin-table tbody td:nth-child(6) { justify-content: flex-end; }
-  .admin-loading { text-align: center; padding: 20px; }
+  /* 字段标签紧凑版 */
+  .admin-table tbody td:nth-child(1)::before { content: '用户名'; width: 54px; }
+  .admin-table tbody td:nth-child(2)::before { content: '昵称'; width: 38px; }
+  .admin-table tbody td:nth-child(3)::before { content: '邮箱'; width: 38px; }
+  .admin-table tbody td:nth-child(4)::before { content: '注册时间'; width: 62px; }
+  .admin-table tbody td:nth-child(5)::before { content: '角色'; width: 34px; }
+  .admin-table tbody td:nth-child(6)::before { content: ''; width: 0; }
+  /* 各列样式微调 */
+  .admin-table tbody td:nth-child(1) { font-weight: 600; font-size: 13px; }
+  .admin-table tbody td:nth-child(4) { font-size: 11px; color: var(--text-secondary); word-break: break-all; }
+  .admin-table tbody td:nth-child(5) { padding-top: 3px; padding-bottom: 3px; }
+  .admin-table tbody td:nth-child(6) { justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
+  /* 操作按钮缩小 */
+  .admin-table tbody td:nth-child(6) button,
+  .admin-table tbody td:nth-child(6) a,
+  .admin-table tbody td:nth-child(6) .btn-text {
+    font-size: 11px !important;
+    padding: 3px 8px !important;
+    min-height: 26px !important;
+  }
+  .admin-loading { text-align: center; padding: 16px; font-size: 12px; }
 
   /* 页面头部操作区 */
   .page-hero { flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 18px; }
