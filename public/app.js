@@ -2184,9 +2184,9 @@ function switchSettingsTab(tab) {
   document.querySelectorAll('.tab-pane').forEach((p) => p.classList.toggle('active', p.dataset.pane === tab));
 }
 
-// 绑定密钥清除按钮
-bindClearKeyBtn('clearFeishuSecret', 'feishuAppSecret');
-bindClearKeyBtn('clearAiKey', 'aiApiKey');
+// 绑定密钥显示/隐藏切换按钮（眼睛图标）
+bindTogglePwBtn('toggleFeishuSecret', 'feishuAppSecret');
+bindTogglePwBtn('toggleAiKey', 'aiApiKey');
 
 // 清空设置弹窗所有表单字段（注册/登录/切换用户时调用）
 let sessionFresh = false; // 标记本次会话是否刚登录/注册（模板编辑器首次打开不自动拉取）
@@ -2195,8 +2195,8 @@ function clearSettingsForm() {
   // 飞书多维表格（配置项，清空）
   $('feishuAppId').value = '';
   $('feishuAppSecret').value = '';
-  const cFs = $('clearFeishuSecret');
-  if (cFs) cFs.classList.add('hidden');
+  const tFs = $('toggleFeishuSecret');
+  if (tFs) { tFs.classList.remove('active'); tFs.textContent = '👁'; }
   $('feishuUrl').value = '';
   const fs = $('feishuStatus');
   if (fs) { fs.textContent = ''; fs.className = 'form-status'; }
@@ -2204,8 +2204,8 @@ function clearSettingsForm() {
   $('aiEnabled').checked = false;
   $('aiBaseUrl').value = '';
   $('aiApiKey').value = '';
-  const cAk = $('clearAiKey');
-  if (cAk) cAk.classList.add('hidden');
+  const tAk = $('toggleAiKey');
+  if (tAk) { tAk.classList.remove('active'); tAk.textContent = '👁'; }
   $('aiModel').value = '';
   $('aiTemp').value = '0.6';
   $('aiAutoGen').checked = true;
@@ -2282,13 +2282,11 @@ async function loadSettingsIntoForm() {
     const res = await fetch(API_PREFIX + '/api/config');
     const cfg = await res.json();
     $('feishuAppId').value = cfg.feishu.app_id || '';
-    // 飞书密钥：已存储则显示占位符，否则空
+    // 飞书密钥：已存储则显示占位符，否则空（眼睛按钮始终可见）
     if (cfg.feishu.has_secret) {
       $('feishuAppSecret').value = SECRET_PLACEHOLDER;
-      $('clearFeishuSecret').classList.remove('hidden');
     } else {
       $('feishuAppSecret').value = '';
-      $('clearFeishuSecret').classList.add('hidden');
     }
     $('feishuUrl').value = cfg.feishu.raw_url || '';
     if (cfg.feishu.configured) {
@@ -2297,13 +2295,11 @@ async function loadSettingsIntoForm() {
     }
     $('aiEnabled').checked = !!cfg.ai.enabled;
     $('aiBaseUrl').value = cfg.ai.base_url || '';
-    // AI 密钥：已存储则显示占位符，否则空
+    // AI 密钥：已存储则显示占位符，否则空（眼睛按钮始终可见）
     if (cfg.ai.has_key) {
       $('aiApiKey').value = SECRET_PLACEHOLDER;
-      $('clearAiKey').classList.remove('hidden');
     } else {
       $('aiApiKey').value = '';
-      $('clearAiKey').classList.add('hidden');
     }
     $('aiModel').value = cfg.ai.model || '';
     $('aiTemp').value = cfg.ai.temperature != null ? cfg.ai.temperature : 0.6;
@@ -2473,13 +2469,24 @@ function handleSecretField(inputId) {
   return v;                                      // 新值 = 更新
 }
 
-// 清除密钥按钮事件
-function bindClearKeyBtn(btnId, inputId) {
+// 密钥显示/隐藏切换按钮事件（眼睛图标）
+function bindTogglePwBtn(btnId, inputId) {
   const btn = $(btnId);
   if (!btn) return;
   btn.addEventListener('click', () => {
-    $(inputId).value = '';
-    btn.classList.add('hidden');
+    const input = $(inputId);
+    if (!input) return;
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.classList.add('active');
+      btn.textContent = '🙈';
+      btn.title = '隐藏密钥';
+    } else {
+      input.type = 'password';
+      btn.classList.remove('active');
+      btn.textContent = '👁';
+      btn.title = '显示密钥';
+    }
   });
 }
 
