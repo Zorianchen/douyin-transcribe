@@ -147,12 +147,22 @@ body {
   border-top-color: #fff; border-radius: 50%;
   display: none; animation: spin .7s linear infinite;
 }
+/* loading 状态：隐藏文字、显示 spinner，严格锁定尺寸 */
+.btn.loading {
+  height: 46px !important;
+  min-height: 46px !important;
+  max-height: 46px !important;
+  padding: 0 !important;
+  line-height: 46px !important;
+  overflow: hidden;
+}
 .btn.loading .btn-label { display: none; }
-.btn.loading .btn-spinner { display: inline-block; }
-/* 固定主操作按钮高度，loading 切换时大小不变 */
+.btn.loading .btn-spinner {
+  display: inline-block;
+  vertical-align: middle;
+}
+/* 主操作按钮固定高度（与 loading 一致） */
 .input-card .btn-primary { height: 46px; min-height: 46px; max-height: 46px; box-sizing: border-box; }
-/* loading 状态保持按钮尺寸不变 */
-.input-card .btn-primary.loading { height: 46px; min-height: 46px; max-height: 46px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ===== 加载 ===== */
@@ -843,6 +853,8 @@ body {
   .btn { min-height: 44px; }
   .btn-primary { height: 48px; min-height: 48px; max-height: 48px; font-size: 16px; }
   .btn-primary.loading { height: 48px; min-height: 48px; max-height: 48px; }
+  /* 小按钮在移动端不放大 */
+  .btn-sm { height: auto !important; min-height: 36px !important; max-height: none !important; font-size: 13px !important; padding: 8px 14px !important; }
 
   /* 抽屉全屏 */
   .drawer { width: 100%; max-width: 100%; border-radius: 16px 16px 0 0; top: auto; animation: slideUp .25s; }
@@ -905,9 +917,46 @@ body {
   .auth-title { font-size: 20px; }
   .auth-input { padding: 12px 14px; font-size: 15px; }
 
-  /* 管理员表格横向滚动 */
+  /* 用户列表：卡片式（移动端隐藏表头） */
   .admin-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .admin-table { min-width: 500px; }
+  /* 移动端隐藏桌面表格表头，每行渲染为卡片 */
+  .admin-table thead { display: none; }
+  .admin-table tbody tr {
+    display: block;
+    position: relative;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+  }
+  .admin-table tbody td {
+    display: flex;
+    align-items: center;
+    padding: 3px 0;
+    font-size: 13px;
+    border: none !important;
+  }
+  .admin-table tbody td::before {
+    content: attr(data-label);
+    display: inline-block;
+    width: 68px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+  /* 按列位置自动填标签（JS 渲染时会写 data-label） */
+  .admin-table tbody td:nth-child(1)::before { content: '用户名'; width: 68px; }
+  .admin-table tbody td:nth-child(2)::before { content: '昵称'; width: 50px; }
+  .admin-table tbody td:nth-child(3)::before { content: '邮箱'; width: 50px; }
+  .admin-table tbody td:nth-child(4)::before { content: '注册时间'; width: 72px; }
+  .admin-table tbody td:nth-child(5)::before { content: '角色'; width: 40px; }
+  .admin-table tbody td:nth-child(6)::before { content: ''; width: 0; } /* 操作列无标签 */
+  .admin-table tbody td:nth-child(1) { font-weight: 600; font-size: 14px; }
+  .admin-table tbody td:nth-child(6) { justify-content: flex-end; }
+  .admin-loading { text-align: center; padding: 20px; }
 
   /* 页面头部操作区 */
   .page-hero { flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 18px; }
