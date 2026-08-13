@@ -63,8 +63,8 @@ app.get('/api/health', auth.attachUser, (req, res) => {
   const cfg = configStore.get(uid);
   const ai = (cfg && cfg.ai) || {};
   const hasAiConfig = !!(ai.enabled && ai.base_url && ai.api_key && ai.model);
-  // ASR 密钥：环境变量优先，否则用代码内置（硬编码）的硅基流动 Key；与设置页输入无关
-  const hasAsrKeyNow = hasAsrKey() || !!configStore.defaultConfig().siliconflow.api_key;
+  // ASR 密钥：环境变量优先，否则读当前登录账号配置文件里的 siliconflow.api_key（均不进仓库）
+  const hasAsrKeyNow = hasAsrKey() || !!(req.userId && (configStore.get(req.userId).siliconflow || {}).api_key);
   res.json({
     ok: true,
     asr_provider: asr.provider,
@@ -299,12 +299,13 @@ app.post('/api/admin/users/:id/config/reset', auth.requireSystemOwner, (req, res
 
 // 核心接口：提取文字稿
 app.post('/api/transcribe', auth.requireAuth, async (req, res) => {
-  // 硅基流动 Key：环境变量优先，否则用代码内置（硬编码）的 Key；无需在设置页填写
-  const siliconflowKey = process.env.SILICONFLOW_API_KEY || configStore.defaultConfig().siliconflow.api_key;
+  // 硅基流动 Key：① 服务器 .env 的 SILICONFLOW_API_KEY  ② 当前账号配置 JSON 的 siliconflow.api_key
+  // 两种来源都在服务器本地，密钥不进入代码仓库。
+  const siliconflowKey = process.env.SILICONFLOW_API_KEY || (req.userId ? ((configStore.get(req.userId).siliconflow || {}).api_key || '') : '');
   if (!siliconflowKey) {
     let hint;
     if (asr.provider === 'tencent') hint = '请在 .env 中配置 TENCENT_APP_ID、TENCENT_SECRET_ID、TENCENT_SECRET_KEY。';
-    else hint = '未配置语音识别密钥：请在服务器 .env 中添加 SILICONFLOW_API_KEY，或检查代码内置的硅基流动 Key。';
+    else hint = '未配置语音识别密钥：请在服务器 .env 添加 SILICONFLOW_API_KEY，或在 data/configs/{userId}.json 的 siliconflow.api_key 填入密钥，然后重启服务。';
     return res.status(500).json({
       error: {
         code: CODES.NO_API_KEY,
@@ -447,7 +448,7 @@ app.post('/api/batch', auth.requireAuth, (req, res) => {
     for (const item of job.items) {
       item.status = 'running';
       try {
-        const result = await transcribeDouyin(item.url, process.env.SILICONFLOW_API_KEY || configStore.defaultConfig().siliconflow.api_key);
+        const result = await transcribeDouyin(item.url, process.env.SILICONFLOW_API_KEY || (req.userId ? ((configStore.get(req.userId).siliconflow || {}).api_key || '') : ''));
         item.result = result;
         item.status = 'done';
         try { history.add(result, req.userId); autogen.trigger(result.video_id, configStore.get(req.userId).ai); } catch {}
