@@ -2122,17 +2122,7 @@ const settingsBtn = $('settingsBtn');
 let fieldMapSnapshot = {}; // 字段映射编辑快照
 
 function openSettings(tab) {
-  // 刚登录/注册的会话，首次打开设置：保留个人资料+字段映射，只跳过飞书/AI配置加载
-  if (sessionFresh) {
-    sessionFresh = false;
-    loadProfileIntoForm();  // 加载用户名、角色等个人信息
-    loadFieldMapOnly();     // 保留字段映射
-    settingsModal.classList.remove('hidden');
-    settingsMask.classList.remove('hidden');
-    if (tab) switchSettingsTab(tab);
-    return;
-  }
-  loadSettingsIntoForm();
+  loadSettingsIntoForm();   // 从服务器拉取最新配置（含飞书 / AI / 个人资料），始终显示真实数据
   settingsModal.classList.remove('hidden');
   settingsMask.classList.remove('hidden');
   if (tab) switchSettingsTab(tab);
@@ -2200,9 +2190,7 @@ bindTogglePwBtn('toggleFeishuSecret', 'feishuAppSecret');
 bindTogglePwBtn('toggleAiKey', 'aiApiKey');
 
 // 清空设置弹窗所有表单字段（注册/登录/切换用户时调用）
-let sessionFresh = false; // 标记本次会话是否刚登录/注册（模板编辑器首次打开不自动拉取）
 function clearSettingsForm() {
-  sessionFresh = true;
   // 飞书多维表格（配置项，清空）
   $('feishuAppId').value = '';
   $('feishuAppSecret').value = '';
@@ -2646,15 +2634,8 @@ $('aiTestBtn').addEventListener('click', async () => {
 // ========== 初始化 ==========
 // 登录后正式拉起应用；未登录则展示登录/注册门
 function startApp() {
-  // 刚登录/注册的会话，先显示初始状态（不调健康检查），等用户配置后再显示真实状态
-  if (sessionFresh) {
-    const dot = $('healthDot');
-    const txt = $('healthText');
-    if (dot) dot.className = 'health idle';
-    if (txt) txt.textContent = '待配置';
-  } else {
-    checkHealth();
-  }
+  // 立即拉取真实健康状态（含已保存的飞书 / AI 配置），刷新后也能正确显示，不再误报「未配置」
+  checkHealth();
   setInterval(() => checkHealth({ silent: true }), 60000);
   applyHashRoute();
   if (location.hash !== '#library') singleInput.focus();
