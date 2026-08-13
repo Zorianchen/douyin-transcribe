@@ -14,6 +14,7 @@ const CODES = {
   ASR_AUTH: 'ASR_AUTH',
   ASR_RATE_LIMIT: 'ASR_RATE_LIMIT',
   ASR_ERROR: 'ASR_ERROR',
+  ASR_EMPTY: 'ASR_EMPTY',
   TIMEOUT: 'TIMEOUT'
 };
 
@@ -31,6 +32,7 @@ const META = {
   ASR_AUTH:        { status: 502, message: '语音识别密钥无效',       hint: '请检查识别服务的密钥是否正确、账户是否有余额。' },
   ASR_RATE_LIMIT:  { status: 429, message: '识别服务繁忙',           hint: '请求过于频繁或并发超限，请稍后再试。' },
   ASR_ERROR:       { status: 502, message: '语音识别失败',           hint: '识别服务暂时不可用，请稍后重试。' },
+  ASR_EMPTY:       { status: 502, message: '语音识别未返回文字',     hint: '硅基流动可能正临时限流（返回了空结果）。请稍候 1~2 分钟再试一次；若频繁出现，请更换有更高语音识别额度的硅基流动 API Key（配置到 .env 的 SILICONFLOW_API_KEY，或改代码里的 SF_K1/SF_K2）。' },
   TIMEOUT:         { status: 504, message: '请求超时',               hint: '处理时间过长，请稍后重试或更换更短的视频。' }
 };
 
