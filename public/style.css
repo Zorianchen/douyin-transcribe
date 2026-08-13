@@ -150,7 +150,9 @@ body {
 .btn.loading .btn-label { display: none; }
 .btn.loading .btn-spinner { display: inline-block; }
 /* 固定主操作按钮高度，loading 切换时大小不变 */
-.input-card .btn-primary { height: 46px; box-sizing: border-box; }
+.input-card .btn-primary { height: 46px; min-height: 46px; max-height: 46px; box-sizing: border-box; }
+/* loading 状态保持按钮尺寸不变 */
+.input-card .btn-primary.loading { height: 46px; min-height: 46px; max-height: 46px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ===== 加载 ===== */
@@ -747,6 +749,9 @@ body {
 .field-list-item .fname { color: var(--text); }
 .field-list-item .ftype { color: var(--text-secondary); font-size: 11px; }
 
+/* 同步字段按钮：与上方元素留间隙 */
+#feishuSyncBtn { margin-top: 12px; }
+
 /* 文案库卡片：上传状态 + 分析标记 */
 .lib-card-feishu {
   display: inline-flex; align-items: center; gap: 3px;
@@ -836,7 +841,8 @@ body {
 
   /* 按钮触摸目标加大 */
   .btn { min-height: 44px; }
-  .btn-primary { height: 48px; font-size: 16px; }
+  .btn-primary { height: 48px; min-height: 48px; max-height: 48px; font-size: 16px; }
+  .btn-primary.loading { height: 48px; min-height: 48px; max-height: 48px; }
 
   /* 抽屉全屏 */
   .drawer { width: 100%; max-width: 100%; border-radius: 16px 16px 0 0; top: auto; animation: slideUp .25s; }
