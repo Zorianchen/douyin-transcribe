@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#fe2c55" />
   <title>抖音文字稿工作台</title>
-  <link rel="stylesheet" href="style.css?v=20260813j" />
+  <link rel="stylesheet" href="style.css?v=20260813k" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>" />
 </head>
 <body>
@@ -206,6 +206,7 @@
     </div>
     <div class="modal-tabs">
       <button class="modal-tab active" data-tab="feishu" type="button">飞书多维表格</button>
+      <button class="modal-tab" data-tab="asr" type="button">语音识别</button>
       <button class="modal-tab" data-tab="ai" type="button">AI 模型</button>
       <button class="modal-tab" data-tab="profile" type="button">个人资料</button>
       <button class="modal-tab" data-tab="fields" type="button">字段映射</button>
@@ -255,6 +256,17 @@
           <button class="btn btn-secondary btn-sm" id="aiTestBtn" type="button">🧪 测试连接</button>
           <span id="aiStatus" class="form-status"></span>
         </div>
+      </div>
+      <!-- 语音识别（ASR）：把抖音视频音频转成文字稿 -->
+      <div class="tab-pane" data-pane="asr">
+        <div class="pane-desc">语音识别（ASR）用于把抖音视频的<strong>音频转成文字稿</strong>，与上方 AI 模型相互独立。配置后刷新页面，状态栏即显示「✓ 语音识别已配置」。</div>
+        <label class="form-label">硅基流动 API Key（SenseVoice 语音识别）</label>
+        <div class="form-input-row">
+          <input type="password" id="sfApiKey" class="form-input" placeholder="sk-...（留空不修改）" autocomplete="new-password" />
+          <button type="button" id="toggleSfKey" class="btn-toggle-pw" title="显示/隐藏密钥">👁</button>
+          <button type="button" id="clearSfKey" class="btn-toggle-pw hidden" title="清空密钥">🗑</button>
+        </div>
+        <div class="form-hint">在 <a href="https://cloud.siliconflow.cn" target="_blank" rel="noopener">硅基流动控制台</a> 获取 API Key。此 Key 仅用于语音识别，存于你的账号配置（不进代码仓库）。首次转写时自动验证有效性。</div>
       </div>
       <!-- 个人资料配置 -->
       <div class="tab-pane" data-pane="profile">
@@ -415,6 +427,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20260813j"></script>
+  <script src="app.js?v=20260813k"></script>
 </body>
 </html>
