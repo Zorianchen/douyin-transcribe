@@ -764,43 +764,149 @@ body {
 /* ===== 移动端 ===== */
 @media (max-width: 768px) {
   .sidebar {
-    width: 100%; height: 56px; bottom: auto;
-    flex-direction: row; align-items: center;
-    border-right: none; border-bottom: 1px solid var(--border);
+    width: 100%; height: auto;
+    bottom: 0; top: 0;
+    flex-direction: column;
+    border-right: none; border-bottom: none;
     padding: 0;
+    z-index: 60;
   }
-  .sidebar-logo { padding: 0 16px; border-bottom: none; font-size: 15px; flex-shrink: 0; }
-  .logo-text { display: none; }
+  /* 顶部栏：logo + 用户 + 设置 */
+  .sidebar-logo {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo-text { display: inline; font-size: 13px; }
+  .logo-emoji { font-size: 20px; }
+  /* 用户区移到顶部栏右侧 */
+  .sidebar-user {
+    display: flex; align-items: center; gap: 6px;
+    padding: 0; border-bottom: none;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  .user-avatar { width: 26px; height: 26px; font-size: 12px; }
+  .user-name { display: none; } /* 手机上隐藏用户名，只显示头像 */
+  .user-logout {
+    font-size: 11px; padding: 3px 8px;
+  }
+  /* 导航图标行 */
   .nav {
-    flex-direction: row; padding: 0; flex: 1; justify-content: space-around; gap: 0;
+    flex-direction: row; padding: 0; flex: 1;
+    justify-content: space-around; gap: 0;
+    align-items: stretch;
   }
   .nav-item {
-    flex-direction: column; gap: 2px; padding: 6px 8px; font-size: 11px;
+    flex-direction: column; gap: 2px; padding: 8px 4px; font-size: 10px;
     text-align: center; border-radius: 0;
+    border-bottom: 2px solid transparent;
+    flex: 1;
   }
-  .nav-icon { font-size: 20px; }
-  .sidebar-footer { display: none; }
+  .nav-item.active {
+    background: none; color: var(--primary);
+    box-shadow: none;
+    border-bottom-color: var(--primary);
+    font-weight: 600;
+  }
+  .nav-icon { font-size: 22px; }
+  /* 底部状态栏：显示健康状态 + 设置按钮（关键！之前被隐藏了） */
+  .sidebar-footer {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 14px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    flex-shrink: 0;
+    background: #fafafa;
+  }
+  .health { font-size: 9px; }
+  .settings-btn { font-size: 16px; padding: 4px 8px; }
   .sidebar-toggle { display: none; }
-  .content { margin-left: 0; margin-top: 56px; padding: 16px 14px 80px; max-width: 100%; }
-  .page-hero h1 { font-size: 22px; }
-  .card { padding: 16px; }
-  .drawer { width: 100%; max-width: 100%; }
+
+  /* 主内容区 */
+  .content { margin-left: 0; margin-top: 0; padding: 14px 12px 90px; max-width: 100%; }
+  .page-hero h1 { font-size: 20px; }
+  .page-hero p { font-size: 13px; }
+  .card { padding: 14px; border-radius: 10px; }
+
+  /* 输入区优化 */
+  .url-input { font-size: 14px; padding: 10px 12px; }
+  .input-label { font-size: 13px; }
+  .input-hint { font-size: 11px; }
+
+  /* 按钮触摸目标加大 */
+  .btn { min-height: 44px; }
+  .btn-primary { height: 48px; font-size: 16px; }
+
+  /* 抽屉全屏 */
+  .drawer { width: 100%; max-width: 100%; border-radius: 16px 16px 0 0; top: auto; animation: slideUp .25s; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: none; } }
+
+  /* 文案库单列 */
   .library-grid { grid-template-columns: 1fr; gap: 12px; }
   .library-toolbar { flex-wrap: wrap; }
   .library-toolbar .search-input { flex: 1 1 100%; }
-  /* 卡片底部三个按钮：窄屏允许换行，避免挤压文字 */
   .lib-card-actions { flex-wrap: wrap; }
-  .lib-card-actions button { flex: 1 1 auto; min-width: 84px; }
-  /* 输入区按钮在手机上占满宽度，方便点按 */
-  .input-card .btn-primary { width: 100%; }
-  /* 抽屉底部按钮堆叠 */
-  .drawer-footer { flex-wrap: wrap; }
-  .drawer-footer .btn { flex: 1 1 100%; }
-  /* 设置弹窗在手机上更宽 */
-  .modal { width: 94vw; max-height: 90vh; }
-  /* AI 成果面板在手机上单列 */
+  .lib-card-actions button { flex: 1 1 auto; min-width: 80px; }
+
+  /* 设置弹窗：几乎全屏，底部弹出式 */
+  .modal {
+    width: 96vw; max-width: 96vw; max-height: 92vh;
+    top: auto; bottom: 0; left: 0; right: 0;
+    transform: none; border-radius: 20px 20px 0 0;
+    animation: modalSlideUp .25s;
+  }
+  @keyframes modalSlideUp { from { transform: translateY(100%); } to { transform: none; } }
+  .modal-header { padding: 14px 16px; }
+  .modal-body { padding: 14px 16px; }
+  .modal-footer { padding: 10px 16px; }
+  .modal-tabs { padding: 8px 12px 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .modal-tab { padding: 8px 12px; font-size: 13px; white-space: nowrap; }
+
+  /* 表单在手机上的优化 */
+  .form-input { font-size: 15px; padding: 11px 12px; min-height: 46px; }
+  .form-input-row .form-input { min-height: 42px; }
+  .btn-toggle-pw { width: 38px; height: 38px; font-size: 17px; }
+  .form-row { flex-wrap: wrap; }
+  .field-map-row { grid-template-columns: 110px 1fr; gap: 6px; }
+  .field-map-row input { font-size: 13px; padding: 8px 10px; }
+
+  /* AI 成果面板单列 */
   .ai-results-grid { grid-template-columns: 1fr; }
-  .ai-result-card { padding: 12px 14px; }
+  .ai-result-card { padding: 10px 12px; }
+  .ai-bar { padding: 10px 12px; }
+  .ai-chip { padding: 7px 12px; font-size: 12px; }
+
+  /* 结果区域 */
+  .result-title { font-size: 17px; }
+  .clean-text { font-size: 14px; padding: 12px; }
+  .result-actions { gap: 8px; }
+  .result-actions .btn-secondary { min-height: 40px; }
+
+  /* 加载动画 */
+  .loading { padding: 28px 16px; }
+  .loading-spinner { width: 36px; height: 36px; }
+
+  /* Toast 在手机上更大 */
+  .toast { font-size: 13px; padding: 12px 24px; bottom: 80px; }
+
+  /* 批量列表 */
+  .batch-item { padding: 10px 12px; gap: 10px; }
+  .batch-item-title { font-size: 13px; }
+
+  /* 登录弹窗 */
+  .auth-card { padding: 28px 22px 24px; border-radius: 14px; }
+  .auth-title { font-size: 20px; }
+  .auth-input { padding: 12px 14px; font-size: 15px; }
+
+  /* 管理员表格横向滚动 */
+  .admin-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .admin-table { min-width: 500px; }
+
+  /* 页面头部操作区 */
+  .page-hero { flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 18px; }
 }
 
 /* ===== 登录 / 注册门 ===== */
