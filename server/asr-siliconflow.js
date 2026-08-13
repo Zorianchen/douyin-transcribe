@@ -152,22 +152,17 @@ function transcribeChunk(audioPath, apiKey) {
   });
 }
 
+function delay(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 /**
- * 转录音频，返回带时间戳的 segments
- * @param {string} audioPath 本地音频文件路径（mp3）
- * @param {string} [apiKey] 可选，优先使用示例传入的硅基流动 API Key（来自用户设置）；缺省时回退环境变量 SILICONFLOW_API_KEY
+ * 单次完整识别（不含重试）。
+ * 硅基流动在限流时会返回 HTTP 200 但 text 为空，这里把「空」当作可能的限流，
+ * 交由外层 transcribe() 做整体重试。
  * @returns {Promise<{segments:Array, duration:number}>}
  */
-async function transcribe(audioPath, apiKey) {
-  const key = apiKey || process.env.SILICONFLOW_API_KEY;
-  if (!key) {
-    throw new AppError(
-      CODES.NO_API_KEY,
-      '未配置硅基流动 API Key',
-      '请在「设置 → AI 模型（硅基流动）」中填写硅基流动 API Key 并保存。'
-    );
-  }
-
+async function transcribeOnce(audioPath, apiKey) {
   const totalDuration = await probeDuration(audioPath);
 
   // 短音频（<=35秒）直接整段发送，不需要切块
@@ -212,6 +207,42 @@ async function transcribe(audioPath, apiKey) {
       fs.rmdirSync(chunkDir);
     } catch {}
   }
+}
+
+/**
+ * 转录音频，返回带时间戳的 segments
+ * @param {string} audioPath 本地音频文件路径（mp3）
+ * @param {string} [apiKey] 可选，优先使用示例传入的硅基流动 API Key；缺省时回退环境变量 SILICONFLOW_API_KEY
+ * @returns {Promise<{segments:Array, duration:number}>}
+ */
+async function transcribe(audioPath, apiKey) {
+  const key = apiKey || process.env.SILICONFLOW_API_KEY;
+  if (!key) {
+    throw new AppError(
+      CODES.NO_API_KEY,
+      '未配置硅基流动 API Key',
+      '请在「设置 → 语音识别（硅基流动）」中填写硅基流动 API Key 并保存。'
+    );
+  }
+
+  // 硅基流动限流时会返回 HTTP 200 但 text 为空，整体重试以规避瞬时限流
+  const MAX_TRIES = 3;
+  let lastResult = null;
+  for (let attempt = 1; attempt <= MAX_TRIES; attempt++) {
+    lastResult = await transcribeOnce(audioPath, apiKey);
+    if (lastResult.segments.length > 0) {
+      return lastResult;
+    }
+    if (attempt < MAX_TRIES) {
+      await delay(3000 * attempt); // 指数退避：3s、6s
+    }
+  }
+
+  throw new AppError(
+    CODES.ASR_EMPTY,
+    '语音识别未返回任何文字',
+    '硅基流动可能正临时限流（返回了空结果）。请稍候 1~2 分钟再试一次；若频繁出现，请更换有更高语音识别额度的硅基流动 API Key（配置到 .env 的 SILICONFLOW_API_KEY，或改代码里的 SF_K1/SF_K2）。'
+  );
 }
 
 /**
