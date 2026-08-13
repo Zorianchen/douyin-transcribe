@@ -925,7 +925,7 @@ async function loadAdminTemplate() {
     if (tpl.feishu && tpl.feishu.configured) parts.push('飞书：已连接（' + escapeHtml(tpl.feishu.table_id) + '）');
     else if (tpl.feishu && tpl.feishu.app_id) parts.push('飞书：已填 App ID（未完全连接）');
     else parts.push('飞书：未配置');
-    if (tpl.ai && tpl.ai.enabled) parts.push('AI：' + escapeHtml(tpl.ai.model || '自定义模型') + (tpl.ai.has_key ? '' : '（缺 Key）'));
+    if (tpl.ai && tpl.ai.enabled) parts.push('AI：' + escapeHtml(tpl.ai.model || '自定义模型') + (tpl.ai.api_key ? '' : '（缺 Key）'));
     else parts.push('AI：未启用');
     statusEl.textContent = parts.join('　|　');
   } catch (e) {
@@ -998,7 +998,7 @@ async function viewUserConfig(id) {
     rows.push(['飞书表格', feishu.table_id || '（空）']);
     rows.push(['AI 模型', ai.enabled ? (ai.model || '自定义') : '未启用']);
     rows.push(['AI API 地址', ai.base_url || '（默认）']);
-    rows.push(['AI API Key', ai.has_key ? '已配置' : '（空）']);
+    rows.push(['AI API Key', ai.api_key ? '已配置' : '（空）']);
     rows.push(['AI 温度', ai.temperature != null ? ai.temperature : 0.6]);
     $('userConfigTitle').textContent = '用户配置 · ' + (cfg.username || '');
     $('userConfigBody').innerHTML = '<div class="config-readonly">' +
@@ -2282,12 +2282,8 @@ async function loadSettingsIntoForm() {
     const res = await fetch(API_PREFIX + '/api/config');
     const cfg = await res.json();
     $('feishuAppId').value = cfg.feishu.app_id || '';
-    // 飞书密钥：已存储则显示占位符，否则空（眼睛按钮始终可见）
-    if (cfg.feishu.has_secret) {
-      $('feishuAppSecret').value = SECRET_PLACEHOLDER;
-    } else {
-      $('feishuAppSecret').value = '';
-    }
+    // 飞书密钥：直接回填真实值（默认 password 类型，用户可点眼睛查看）
+    $('feishuAppSecret').value = cfg.feishu.app_secret || '';
     $('feishuUrl').value = cfg.feishu.raw_url || '';
     if (cfg.feishu.configured) {
       $('feishuStatus').textContent = '✓ 已连接：' + cfg.feishu.table_id;
@@ -2295,12 +2291,8 @@ async function loadSettingsIntoForm() {
     }
     $('aiEnabled').checked = !!cfg.ai.enabled;
     $('aiBaseUrl').value = cfg.ai.base_url || '';
-    // AI 密钥：已存储则显示占位符，否则空（眼睛按钮始终可见）
-    if (cfg.ai.has_key) {
-      $('aiApiKey').value = SECRET_PLACEHOLDER;
-    } else {
-      $('aiApiKey').value = '';
-    }
+    // AI 密钥：直接回填真实值（默认 password 类型，用户可点眼睛查看）
+    $('aiApiKey').value = cfg.ai.api_key || '';
     $('aiModel').value = cfg.ai.model || '';
     $('aiTemp').value = cfg.ai.temperature != null ? cfg.ai.temperature : 0.6;
     $('aiAutoGen').checked = cfg.ai.auto_generate !== false;
