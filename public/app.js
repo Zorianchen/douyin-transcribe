@@ -2188,6 +2188,8 @@ function switchSettingsTab(tab) {
 // 绑定密钥显示/隐藏切换按钮（眼睛图标）
 bindTogglePwBtn('toggleFeishuSecret', 'feishuAppSecret');
 bindTogglePwBtn('toggleAiKey', 'aiApiKey');
+bindTogglePwBtn('toggleSfKey', 'sfApiKey');
+bindClearKeyBtn('clearSfKey', 'sfApiKey');
 
 // 清空设置弹窗所有表单字段（注册/登录/切换用户时调用）
 function clearSettingsForm() {
@@ -2208,6 +2210,10 @@ function clearSettingsForm() {
   $('aiModel').value = '';
   $('aiTemp').value = '0.6';
   $('aiAutoGen').checked = true;
+  // 硅基流动（语音识别）密钥（清空）
+  $('sfApiKey').value = '';
+  const tSf = $('toggleSfKey');
+  if (tSf) { tSf.classList.remove('active'); tSf.textContent = '👁'; }
   // 密码修改区（清空）
   const oldPwd = $('pfOldPassword');
   if (oldPwd) oldPwd.value = '';
@@ -2295,6 +2301,15 @@ async function loadSettingsIntoForm() {
     $('aiModel').value = cfg.ai.model || '';
     $('aiTemp').value = cfg.ai.temperature != null ? cfg.ai.temperature : 0.6;
     $('aiAutoGen').checked = cfg.ai.auto_generate !== false;
+
+    // 硅基流动（语音识别）密钥：已配置则显示占位符，否则空
+    if (cfg.siliconflow && cfg.siliconflow.has_key) {
+      $('sfApiKey').value = SECRET_PLACEHOLDER;
+      $('clearSfKey').classList.remove('hidden');
+    } else {
+      $('sfApiKey').value = '';
+      $('clearSfKey').classList.add('hidden');
+    }
 
     fieldMapSnapshot = Object.assign({}, cfg.field_map);
     renderFieldMapEditor();
@@ -2505,11 +2520,15 @@ settingsSave.addEventListener('click', async () => {
       temperature: parseFloat($('aiTemp').value) || 0.6,
       auto_generate: $('aiAutoGen').checked
     },
+    siliconflow: {
+      api_key: handleSecretField('sfApiKey')
+    },
     field_map: fieldMapSnapshot
   };
   // undefined 字段不发送（后端 deepMerge 不会覆盖）
   if (body.feishu.app_secret === undefined) delete body.feishu.app_secret;
   if (body.ai.api_key === undefined) delete body.ai.api_key;
+  if (body.siliconflow.api_key === undefined) delete body.siliconflow.api_key;
 
   try {
     const res = await fetch(API_PREFIX + '/api/config', {
