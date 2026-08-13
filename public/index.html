@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#fe2c55" />
   <title>抖音文字稿工作台</title>
-  <link rel="stylesheet" href="style.css?v=20260812x" />
+  <link rel="stylesheet" href="style.css?v=20260813a" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>" />
 </head>
 <body>
@@ -218,7 +218,7 @@
         <label class="form-label">App Secret</label>
         <div class="form-input-row">
           <input type="password" id="feishuAppSecret" class="form-input" placeholder="应用密钥（留空不修改）" autocomplete="new-password" />
-          <button type="button" id="clearFeishuSecret" class="btn-clear-key hidden" title="清除密钥">✕</button>
+          <button type="button" id="toggleFeishuSecret" class="btn-toggle-pw" title="显示/隐藏密钥">👁</button>
         </div>
         <label class="form-label">多维表格链接</label>
         <input type="text" id="feishuUrl" class="form-input" placeholder="https://xxx.feishu.cn/wiki/...?table=tbl...&view=vew..." />
@@ -241,7 +241,7 @@
         <label class="form-label">API Key</label>
         <div class="form-input-row">
           <input type="password" id="aiApiKey" class="form-input" placeholder="sk-...（留空不修改）" autocomplete="new-password" />
-          <button type="button" id="clearAiKey" class="btn-clear-key hidden" title="清除密钥">✕</button>
+          <button type="button" id="toggleAiKey" class="btn-toggle-pw" title="显示/隐藏密钥">👁</button>
         </div>
         <div class="form-hint">可填任意 OpenAI 兼容接口（硅基流动 LLM / OpenAI / DeepSeek / 通义等）。此 Key 仅用于 AI 加工，与语音识别 Key 独立。</div>
         <label class="form-label">模型名称</label>
@@ -415,6 +415,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20260812x"></script>
+  <script src="app.js?v=20260813a"></script>
 </body>
 </html>
