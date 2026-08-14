@@ -10,8 +10,9 @@ const { AppError, CODES } = require('./errors');
 const FFMPEG = process.env.FFMPEG_PATH || 'ffmpeg';
 const FFPROBE = process.env.FFPROBE_PATH || 'ffprobe';
 
-// 抖音 CDN 是国内地址，ffmpeg 不需要走代理。
-// 清除代理环境变量，避免系统开了 Clash 但代理没运行时 ffmpeg 连死代理超时。
+// 默认清除代理环境变量，避免系统开了 Clash 但代理没运行时 ffmpeg 连死代理超时。
+// 若配置了 DOUYIN_PROXY，则改由 downloadEnv() 注入，让 ffmpeg 经代理下载抖音 CDN，
+// 用于绕过云服务器数据中心 IP 被抖音 CDN 403 拦截的问题。
 function cleanEnv() {
   const env = { ...process.env };
   delete env.HTTP_PROXY;
@@ -20,6 +21,26 @@ function cleanEnv() {
   delete env.https_proxy;
   delete env.ALL_PROXY;
   delete env.all_proxy;
+  return env;
+}
+
+// 给 ffmpeg 下载抖音视频用的环境变量：在 cleanEnv 基础上按需注入 DOUYIN_PROXY
+function downloadEnv() {
+  const env = cleanEnv();
+  const dyProxy = (process.env.DOUYIN_PROXY || '').trim();
+  if (dyProxy) {
+    if (/^socks5?:\/\//i.test(dyProxy)) {
+      // SOCKS 代理：ffmpeg 通过 socks_proxy 环境变量识别
+      env.socks_proxy = dyProxy;
+      env.SOCKS_PROXY = dyProxy;
+    } else {
+      // HTTP/HTTPS 代理：ffmpeg 对 https 目标走 CONNECT 隧道
+      env.HTTP_PROXY = dyProxy;
+      env.HTTPS_PROXY = dyProxy;
+      env.http_proxy = dyProxy;
+      env.https_proxy = dyProxy;
+    }
+  }
   return env;
 }
 
@@ -90,7 +111,8 @@ async function extractAudio(playAddr, tempDir) {
     `audio_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.mp3`
   );
 
-  // 抖音 CDN 下载同样可能校验 Cookie（云服务器 IP 易被拦截）
+  // 抖音 CDN 下载同样可能校验 Cookie（云服务器 IP 易被拦截）。
+  // DOUYIN_PROXY 配置后，ffmpeg 会经代理出口下载，绕过 403。
   const dyCookie = (process.env.DOUYIN_COOKIE || '').trim();
   const dlHeaders = 'Referer: https://www.douyin.com/\r\n' +
     (dyCookie ? 'Cookie: ' + dyCookie + '\r\n' : '');
@@ -111,7 +133,7 @@ async function extractAudio(playAddr, tempDir) {
   ];
 
   await new Promise((resolve, reject) => {
-    const p = spawn(FFMPEG, args, { timeout: 180000, env: cleanEnv() });
+    const p = spawn(FFMPEG, args, { timeout: 180000, env: downloadEnv() });
     let err = '';
     p.stderr.on('data', (d) => (err += d.toString()));
     p.on('close', (code) => {
@@ -120,7 +142,7 @@ async function extractAudio(playAddr, tempDir) {
         new AppError(
           CODES.AUDIO_FAILED,
           'ffmpeg 提取音频失败 (code ' + code + ')',
-          '视频可能无音轨或链接已失效，请更换视频重试。'
+          '视频可能无音轨或链接已失效，请更换视频重试。若服务器在云上被抖音 CDN 拦截，请在 .env 配置 DOUYIN_PROXY。'
         )
       );
     });
