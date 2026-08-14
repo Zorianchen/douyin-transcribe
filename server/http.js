@@ -5,6 +5,7 @@
 const https = require('https');
 const http = require('http');
 const { URL } = require('url');
+const { getDouyinProxyAgent } = require('./proxy');
 
 const DEFAULT_UA =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15 ' +
@@ -12,6 +13,19 @@ const DEFAULT_UA =
 
 function pick(urlStr) {
   return new URL(urlStr).protocol === 'http:' ? http : https;
+}
+
+// 根据目标 URL 决定是否走抖音代理：
+// 显式 agent 优先；否则抖音域名（douyin/iesdouyin/bytedance）且配置了 DOUYIN_PROXY 时自动走代理。
+// 这样 douyin.js 的所有请求无需逐个改，抖音相关请求（含短链重定向/解析）自动经代理出口，
+// 用于绕过云服务器数据中心 IP 被抖音 CDN 403 拦截。无 DOUYIN_PROXY 时保持原直连行为。
+function pickAgentForUrl(url, explicitAgent) {
+  if (explicitAgent) return explicitAgent;
+  const dyAgent = getDouyinProxyAgent();
+  if (!dyAgent) return null;
+  let host = '';
+  try { host = new URL(url).hostname || ''; } catch {}
+  return /douyin|iesdouyin|bytedance/i.test(host) ? dyAgent : null;
 }
 
 /**
@@ -23,6 +37,7 @@ function pick(urlStr) {
  * @property {'auto'|'text'|'buffer'} [responseType]
  * @property {number} [maxRedirects]
  * @property {boolean} [json] 请求体按 JSON 发送并设置 content-type
+ * @property {Object} [agent] 显式指定 http.Agent（覆盖自动代理选择）
  */
 
 /**
@@ -38,7 +53,8 @@ function request(url, options = {}) {
     body = null,
     timeout = 15000,
     responseType = 'auto',
-    maxRedirects = 5
+    maxRedirects = 5,
+    agent = null
   } = options;
 
   return new Promise((resolve, reject) => {
@@ -46,7 +62,8 @@ function request(url, options = {}) {
     const client = pick(url);
     const opts = {
       method,
-      headers: { 'User-Agent': DEFAULT_UA, ...headers }
+      headers: { 'User-Agent': DEFAULT_UA, ...headers },
+      agent: pickAgentForUrl(url, agent)
     };
 
     const req = client.request(url, opts, (res) => {
@@ -103,12 +120,12 @@ function request(url, options = {}) {
 /**
  * 仅获取短链重定向后的最终 URL（不下载 body）
  */
-function resolveLocation(url, timeout = 10000, extraHeaders = {}) {
+function resolveLocation(url, timeout = 10000, extraHeaders = {}, agent = null) {
   return new Promise((resolve, reject) => {
     const client = pick(url);
     const req = client.request(
       url,
-      { method: 'GET', headers: { 'User-Agent': DEFAULT_UA, ...extraHeaders } },
+      { method: 'GET', headers: { 'User-Agent': DEFAULT_UA, ...extraHeaders }, agent: pickAgentForUrl(url, agent) },
       (res) => {
         const status = res.statusCode || 0;
         if (status >= 300 && status < 400 && res.headers.location) {
