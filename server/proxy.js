@@ -2,6 +2,8 @@
 
 // HTTPS-over-HTTP-proxy Agent（零依赖）
 // 有 HTTPS_PROXY 环境变量就走代理；国内域名（飞书/抖音/DeepSeek等）直连。
+// DOUYIN_PROXY 为抖音专用代理：一旦配置，抖音相关请求（解析/下载）强制走它，
+// 用来绕过云服务器数据中心 IP 被抖音 CDN 403 拦截的问题。
 
 const https = require('https');
 const http = require('http');
@@ -66,7 +68,7 @@ class HttpsProxyAgent extends https.Agent {
   }
 }
 
-// 国内域名关键词（直连，不走代理）
+// 国内域名关键词（直连，不走全局代理）
 const DOMESTIC_KEYWORDS = [
   'feishu.cn', 'larkoffice.com',
   'douyin.com', 'douyinpic.com', 'douyinvod.com', 'bytedance.com', 'toutiao.com', 'ixigua.com',
@@ -107,4 +109,18 @@ function getProxyAgent(targetHost) {
   return cachedAgent;
 }
 
-module.exports = { getProxyAgent, getProxyUrl, HttpsProxyAgent, isDomesticHost };
+// 抖音专用代理：读 DOUYIN_PROXY，强制抖音相关请求（解析/下载）走代理
+// 不受上方「国内域名直连豁免」限制。云服务器数据中心 IP 被抖音 CDN 403 时配置此项即可。
+let cachedDyAgent = null;
+let cachedDyProxy = '';
+
+function getDouyinProxyAgent() {
+  const proxyUrl = (process.env.DOUYIN_PROXY || '').trim();
+  if (!proxyUrl) return null;
+  if (cachedDyAgent && cachedDyProxy === proxyUrl) return cachedDyAgent;
+  cachedDyAgent = new HttpsProxyAgent(proxyUrl);
+  cachedDyProxy = proxyUrl;
+  return cachedDyAgent;
+}
+
+module.exports = { getProxyAgent, getProxyUrl, HttpsProxyAgent, isDomesticHost, getDouyinProxyAgent };
